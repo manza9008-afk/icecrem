@@ -1,0 +1,138 @@
+{
+  "project_name": "HOOREN_FOOD_PRODUCTS_ERP",
+  "identity": {
+    "name": "E1",
+    "role": "Anti-AI Designer",
+    "mission": "Create a high-density, professional accounting system that breaks the 'boring enterprise' mold while remaining hyper-functional."
+  },
+  "design_principles": {
+    "fusion": "Swiss Style precision mixed with Japanese Bento organization.",
+    "emotion": "Trust, Clarity, Efficiency. The user should feel in control.",
+    "content_first": "Data is the star. UI is the stage. High density, low noise.",
+    "zoom_in": "Focus on the numbers. Use monospace for data. Use color only for status.",
+    "negative_space": "Use whitespace to group functional areas, not to spread out data.",
+    "contrast": "High contrast for readability. Light grey backgrounds for structure, white for content."
+  },
+  "typography": {
+    "headings": {
+      "family": "Manrope",
+      "weights": ["600", "700", "800"],
+      "usage": "Page titles, Section headers, Modal titles. CRITICAL: Tight tracking (-0.02em)."
+    },
+    "body": {
+      "family": "Inter",
+      "weights": ["400", "500"],
+      "usage": "General text, Labels, Form inputs."
+    },
+    "data": {
+      "family": "JetBrains Mono",
+      "weights": ["400", "500"],
+      "usage": "ALL Numerical data, Prices, GSTIN, HSN Codes, IDs. Right-aligned for currency."
+    }
+  },
+  "colors": {
+    "primary": {
+      "name": "Professional Blue",
+      "hex": "#1e40af",
+      "tailwind": "bg-blue-800",
+      "usage": "Primary Buttons, Active States, Brand Elements."
+    },
+    "secondary": {
+      "name": "Slate Surface",
+      "hex": "#f8fafc",
+      "tailwind": "bg-slate-50",
+      "usage": "Page Background, Secondary Button Background."
+    },
+    "accent": {
+      "name": "Signal Orange",
+      "hex": "#f97316",
+      "tailwind": "text-orange-500",
+      "usage": "Warnings, Pending Actions, Important Highlights."
+    },
+    "neutral": {
+      "border": "#e2e8f0",
+      "text_primary": "#0f172a",
+      "text_secondary": "#64748b",
+      "text_tertiary": "#94a3b8"
+    },
+    "semantic": {
+      "success": "#16a34a",
+      "error": "#dc2626",
+      "warning": "#d97706",
+      "info": "#3b82f6"
+    }
+  },
+  "layout": {
+    "grid_system": "Bento Grid Mode B (High Density)",
+    "container": "w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8",
+    "spacing": {
+      "section_gap": "gap-6",
+      "component_gap": "gap-4",
+      "internal_padding": "p-4"
+    },
+    "structure": {
+      "sidebar": "w-64 fixed h-full bg-slate-900 text-white z-50",
+      "header": "h-16 fixed top-0 right-0 left-64 bg-white border-b z-40 px-6 flex items-center justify-between",
+      "main": "pt-20 pl-64 min-h-screen bg-slate-50"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "bg-white border border-slate-200 shadow-sm rounded-lg",
+      "header": "border-b border-slate-100 p-4",
+      "content": "p-4"
+    },
+    "buttons": {
+      "primary": "bg-blue-800 hover:bg-blue-900 text-white shadow-sm h-9 px-4 rounded-md font-medium text-sm transition-all active:scale-95",
+      "secondary": "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 h-9 px-4 rounded-md font-medium text-sm transition-all active:scale-95",
+      "ghost": "hover:bg-slate-100 text-slate-600 h-9 px-3 rounded-md font-medium text-sm"
+    },
+    "inputs": {
+      "style": "h-9 bg-white border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-md text-sm"
+    },
+    "tables": {
+      "wrapper": "rounded-md border border-slate-200 bg-white overflow-hidden",
+      "header": "bg-slate-50 border-b border-slate-200 h-10 text-xs font-semibold text-slate-500 uppercase tracking-wider",
+      "row": "h-10 border-b border-slate-100 hover:bg-slate-50/50 transition-colors",
+      "cell": "px-4 py-2 text-sm text-slate-700"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": "shadow-sm for cards, shadow-md for dropdowns/modals. Avoid large diffuse shadows.",
+    "borders": "1px solid slate-200 everywhere. Defines structure.",
+    "radius": "rounded-md (6px) for everything. Not too round, not too sharp.",
+    "micro_interactions": "Active states on all buttons. Row hover effects on tables."
+  },
+  "accessibility": {
+    "focus_ring": "ring-2 ring-blue-500 ring-offset-2",
+    "contrast": "Ensure text is slate-700 or darker on white backgrounds.",
+    "labels": "All inputs must have visible labels or aria-labels."
+  },
+  "image_urls": {
+    "login_hero": "https://images.unsplash.com/photo-1686948927872-af1042ff16dc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwxfHxibHVlYmVycnklMjBpY2UlMjBjcmVhbSUyMHNjb29wJTIwd2hpdGUlMjBiYWNrZ3JvdW5kJTIwbWluaW1hbHxlbnwwfHx8fDE3NzExOTAwMDl8MA&ixlib=rb-4.1.0&q=85",
+    "brand_placeholder": "https://images.unsplash.com/photo-1554521718-e87e96d67ca5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHw0fHxibHVlYmVycnklMjBpY2UlMjBjcmVhbSUyMHNjb29wJTIwd2hpdGUlMjBiYWNrZ3JvdW5kJTIwbWluaW1hbHxlbnwwfHx8fDE3NzExOTAwMDl8MA&ixlib=rb-4.1.0&q=85",
+    "empty_state": "https://images.unsplash.com/photo-1709620050386-ed31904f8ff7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwzfHxibHVlYmVycnklMjBpY2UlMjBjcmVhbSUyMHNjb29wJTIwd2hpdGUlMjBiYWNrZ3JvdW5kJTIwbWluaW1hbHxlbnwwfHx8fDE3NzExOTAwMDl8MA&ixlib=rb-4.1.0&q=85"
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: The user mentioned 'Hostinger/PHP'. Clarify that you are building in the PROVIDED Python/React environment, but the design is adapted for professional accounting.",
+    "Use 'Manrope' for all Headings. Import it from Google Fonts.",
+    "Use 'JetBrains Mono' for all numeric data in tables. Import it.",
+    "Implement a 'Dense Mode' for tables (smaller padding) to mimic BUSY/Excel.",
+    "The Sidebar must be collapsible to maximize data viewing area.",
+    "Forms for 'Voucher Entry' must be keyboard navigable (Enter key moves to next field).",
+    "Use 'Recharts' for the Dashboard graphs (Sales vs Purchase, Monthly Trends).",
+    "All monetary values must be formatted with commas and 2 decimal places (e.g., ₹ 1,23,456.00).",
+    "Use 'date-fns' for date formatting.",
+    "The 'Masters' section should use a Tabbed interface (Items, Parties, Ledgers) to reduce page loads.",
+    "Sales Invoice creation page needs a 'Product Table' where rows can be added dynamically.",
+    "Always check for 'Stock Levels' when adding items to an invoice (show warning if low)."
+  ],
+  "universal_guidelines": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid this.",
+    "Don't make generic centered layouts. Use dense, data-rich grids.",
+    "Use 2-3x more spacing (in layout wrappers) but TIGHT spacing in data tables.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Subtle grain textures or noise overlays can make the solid blue feel more premium.",
+    "Main agent relies on these image URLs. Missing categories = placeholder text which is FORBIDDEN."
+  ]
+}

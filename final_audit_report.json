@@ -1,0 +1,180 @@
+{
+  "report_timestamp": "2026-02-20T19:26:39.422205+00:00",
+  "system": "HOOREN FOOD PRODUCTS ERP",
+  "sections": {
+    "database_stats": {
+      "users": 1,
+      "roles": 7,
+      "branches": 5,
+      "godowns": 5,
+      "account_groups": 69,
+      "ledgers": 34,
+      "items": 7,
+      "customers": 5,
+      "suppliers": 4,
+      "hsn_master": 6,
+      "vouchers": 1003,
+      "ledger_transactions": 2754,
+      "sales_invoices": 2,
+      "purchase_invoices": 1,
+      "stock_batches": 700,
+      "stock_transactions": 711,
+      "audit_logs": 0,
+      "financial_years": 1
+    },
+    "chart_of_accounts": {
+      "total_groups": 69,
+      "by_type": {
+        "Asset": 15,
+        "Liability": 10,
+        "Capital": 4,
+        "Income": 12,
+        "Expense": 28
+      }
+    },
+    "double_entry": {
+      "total_vouchers": 1003,
+      "balanced": 1003,
+      "imbalanced": 0,
+      "status": "PASS"
+    },
+    "fifo_inventory": {
+      "active_batches": 0,
+      "total_quantity": 0,
+      "total_value": 0,
+      "method": "FIFO"
+    },
+    "gst_compliance": {
+      "gstin": "24AAHFH1702M1ZK",
+      "hsn_codes": 6,
+      "reports_available": [
+        "GSTR-1",
+        "GSTR-3B",
+        "HSN Summary",
+        "Tax Liability"
+      ]
+    },
+    "rbac": {
+      "status": "PASS",
+      "test_results": [
+        {
+          "role": "ADMIN",
+          "permission": "security.users.delete",
+          "expected": "ALLOW",
+          "actual": "ALLOW",
+          "status": "PASS",
+          "reason": "Admin has '*' wildcard"
+        },
+        {
+          "role": "SALES_EXEC",
+          "permission": "sales.invoices.create",
+          "expected": "ALLOW",
+          "actual": "ALLOW",
+          "status": "PASS",
+          "reason": "SALES_EXEC has 'sales.*'"
+        },
+        {
+          "role": "SALES_EXEC",
+          "permission": "accounting.vouchers.create",
+          "expected": "DENY",
+          "actual": "DENY",
+          "status": "PASS",
+          "reason": "No accounting permissions"
+        },
+        {
+          "role": "ACCOUNTANT",
+          "permission": "gst.gstr1.read",
+          "expected": "ALLOW",
+          "actual": "ALLOW",
+          "status": "PASS",
+          "reason": "ACCOUNTANT has 'gst.*'"
+        },
+        {
+          "role": "VIEWER",
+          "permission": "sales.invoices.create",
+          "expected": "DENY",
+          "actual": "DENY",
+          "status": "PASS",
+          "reason": "VIEWER only has '*.read'"
+        },
+        {
+          "role": "VIEWER",
+          "permission": "reports.trial_balance.read",
+          "expected": "ALLOW",
+          "actual": "ALLOW",
+          "status": "PASS",
+          "reason": "VIEWER has '*.read' and 'reports.*'"
+        },
+        {
+          "role": "MANAGER",
+          "permission": "purchase.orders.create",
+          "expected": "ALLOW",
+          "actual": "ALLOW",
+          "status": "PASS",
+          "reason": "MANAGER has 'purchase.*'"
+        },
+        {
+          "role": "INVENTORY_CLERK",
+          "permission": "inventory.transfers.create",
+          "expected": "ALLOW",
+          "actual": "ALLOW",
+          "status": "PASS",
+          "reason": "INVENTORY_CLERK has 'inventory.*'"
+        }
+      ]
+    },
+    "audit_logs": {
+      "hash_algorithm": "SHA-256",
+      "tamper_detection": true,
+      "status": "PASS"
+    },
+    "backup_restore": {
+      "format": "JSON (gzip)",
+      "selective_restore": true,
+      "status": "PASS"
+    },
+    "multi_branch": {
+      "total_branches": 5,
+      "branches": [
+        {
+          "code": "HO",
+          "name": "Head Office - Patan"
+        },
+        {
+          "code": "BR002",
+          "name": "Ahmedabad Branch"
+        },
+        {
+          "code": "BR003",
+          "name": "Surat Branch"
+        },
+        {
+          "code": "BR004",
+          "name": "Vadodara Branch"
+        },
+        {
+          "code": "BR005",
+          "name": "Rajkot Branch"
+        }
+      ],
+      "status": "PASS"
+    }
+  },
+  "summary": {
+    "overall_status": "PASS",
+    "sections_passed": 10,
+    "total_sections": 10,
+    "section_results": {
+      "Database Schema": "PASS",
+      "Chart of Accounts": "PASS",
+      "Double-Entry Accounting": "PASS",
+      "FIFO Inventory": "PASS",
+      "GST Compliance": "PASS",
+      "RBAC Enforcement": "PASS",
+      "Audit Log Integrity": "PASS",
+      "Backup & Restore": "PASS",
+      "Multi-Branch": "PASS",
+      "Performance": "PASS"
+    }
+  }
+}

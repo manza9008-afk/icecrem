@@ -1,0 +1,749 @@
+{
+  "audit_timestamp": "2026-02-20T19:25:35.415707+00:00",
+  "system_name": "HOOREN FOOD PRODUCTS ERP",
+  "audit_version": "1.0",
+  "sections": {
+    "database_schema": {
+      "expected_collections": 26,
+      "found_collections": [
+        "users",
+        "roles",
+        "company_settings",
+        "financial_years",
+        "branches",
+        "godowns",
+        "account_groups",
+        "ledgers",
+        "items",
+        "customers",
+        "suppliers",
+        "hsn_master",
+        "vouchers",
+        "ledger_transactions",
+        "sales_invoices",
+        "purchase_invoices",
+        "stock_batches",
+        "stock_transactions",
+        "audit_logs",
+        "system_config"
+      ],
+      "missing_collections": [
+        "sales_quotations",
+        "sales_orders",
+        "sales_returns",
+        "purchase_orders",
+        "purchase_returns",
+        "stock_adjustments"
+      ],
+      "extra_collections": [],
+      "collection_stats": {
+        "users": 1,
+        "roles": 7,
+        "company_settings": 1,
+        "financial_years": 1,
+        "branches": 5,
+        "godowns": 5,
+        "account_groups": 69,
+        "ledgers": 34,
+        "items": 7,
+        "customers": 5,
+        "suppliers": 4,
+        "hsn_master": 6,
+        "vouchers": 1003,
+        "ledger_transactions": 2754,
+        "sales_invoices": 2,
+        "purchase_invoices": 1,
+        "stock_batches": 700,
+        "stock_transactions": 711,
+        "audit_logs": 0,
+        "system_config": 1
+      },
+      "schema_integrity": false
+    },
+    "chart_of_accounts": {
+      "total_groups": 69,
+      "primary_types_found": [
+        "Income",
+        "Liability",
+        "Capital",
+        "Expense",
+        "Asset"
+      ],
+      "primary_types_complete": true,
+      "group_hierarchy": {
+        "Asset": [
+          {
+            "code": "A",
+            "name": "Assets",
+            "nature": "debit"
+          },
+          {
+            "code": "A01",
+            "name": "Current Assets",
+            "nature": "debit"
+          },
+          {
+            "code": "A0101",
+            "name": "Cash-in-Hand",
+            "nature": "debit"
+          },
+          {
+            "code": "A0102",
+            "name": "Bank Accounts",
+            "nature": "debit"
+          },
+          {
+            "code": "A0103",
+            "name": "Sundry Debtors",
+            "nature": "debit"
+          },
+          {
+            "code": "A0104",
+            "name": "Stock-in-Hand",
+            "nature": "debit"
+          },
+          {
+            "code": "A0105",
+            "name": "Loans & Advances (Asset)",
+            "nature": "debit"
+          },
+          {
+            "code": "A0106",
+            "name": "Deposits (Asset)",
+            "nature": "debit"
+          },
+          {
+            "code": "A02",
+            "name": "Fixed Assets",
+            "nature": "debit"
+          },
+          {
+            "code": "A0201",
+            "name": "Land & Building",
+            "nature": "debit"
+          },
+          {
+            "code": "A0202",
+            "name": "Plant & Machinery",
+            "nature": "debit"
+          },
+          {
+            "code": "A0203",
+            "name": "Furniture & Fixtures",
+            "nature": "debit"
+          },
+          {
+            "code": "A0204",
+            "name": "Vehicles",
+            "nature": "debit"
+          },
+          {
+            "code": "A0205",
+            "name": "Computer & Electronics",
+            "nature": "debit"
+          },
+          {
+            "code": "A03",
+            "name": "Investments",
+            "nature": "debit"
+          }
+        ],
+        "Liability": [
+          {
+            "code": "L",
+            "name": "Liabilities",
+            "nature": "credit"
+          },
+          {
+            "code": "L01",
+            "name": "Current Liabilities",
+            "nature": "credit"
+          },
+          {
+            "code": "L0101",
+            "name": "Sundry Creditors",
+            "nature": "credit"
+          },
+          {
+            "code": "L0102",
+            "name": "Duties & Taxes",
+            "nature": "credit"
+          },
+          {
+            "code": "L0103",
+            "name": "Provisions",
+            "nature": "credit"
+          },
+          {
+            "code": "L0104",
+            "name": "Other Current Liabilities",
+            "nature": "credit"
+          },
+          {
+            "code": "L02",
+            "name": "Loans (Liability)",
+            "nature": "credit"
+          },
+          {
+            "code": "L0201",
+            "name": "Secured Loans",
+            "nature": "credit"
+          },
+          {
+            "code": "L0202",
+            "name": "Unsecured Loans",
+            "nature": "credit"
+          },
+          {
+            "code": "L0203",
+            "name": "Bank OD/CC Account",
+            "nature": "credit"
+          }
+        ],
+        "Capital": [
+          {
+            "code": "C",
+            "name": "Capital Account",
+            "nature": "credit"
+          },
+          {
+            "code": "C01",
+            "name": "Capital",
+            "nature": "credit"
+          },
+          {
+            "code": "C02",
+            "name": "Reserves & Surplus",
+            "nature": "credit"
+          },
+          {
+            "code": "C03",
+            "name": "Profit & Loss A/c",
+            "nature": "credit"
+          }
+        ],
+        "Income": [
+          {
+            "code": "I",
+            "name": "Income",
+            "nature": "credit"
+          },
+          {
+            "code": "I01",
+            "name": "Sales Accounts",
+            "nature": "credit"
+          },
+          {
+            "code": "I0101",
+            "name": "Sales - GST",
+            "nature": "credit"
+          },
+          {
+            "code": "I0102",
+            "name": "Sales - Non GST",
+            "nature": "credit"
+          },
+          {
+            "code": "I0103",
+            "name": "Sales Returns",
+            "nature": "debit"
+          },
+          {
+            "code": "I02",
+            "name": "Direct Income",
+            "nature": "credit"
+          },
+          {
+            "code": "I03",
+            "name": "Indirect Income",
+            "nature": "credit"
+          },
+          {
+            "code": "I0301",
+            "name": "Interest Received",
+            "nature": "credit"
+          },
+          {
+            "code": "I0302",
+            "name": "Discount Received",
+            "nature": "credit"
+          },
+          {
+            "code": "I0303",
+            "name": "Commission Received",
+            "nature": "credit"
+          },
+          {
+            "code": "I0304",
+            "name": "Rent Received",
+            "nature": "credit"
+          },
+          {
+            "code": "I0305",
+            "name": "Miscellaneous Income",
+            "nature": "credit"
+          }
+        ],
+        "Expense": [
+          {
+            "code": "E",
+            "name": "Expenses",
+            "nature": "debit"
+          },
+          {
+            "code": "E01",
+            "name": "Purchase Accounts",
+            "nature": "debit"
+          },
+          {
+            "code": "E0101",
+            "name": "Purchases - GST",
+            "nature": "debit"
+          },
+          {
+            "code": "E0102",
+            "name": "Purchases - Non GST",
+            "nature": "debit"
+          },
+          {
+            "code": "E0103",
+            "name": "Purchase Returns",
+            "nature": "credit"
+          },
+          {
+            "code": "E02",
+            "name": "Direct Expenses",
+            "nature": "debit"
+          },
+          {
+            "code": "E0201",
+            "name": "Carriage Inward",
+            "nature": "debit"
+          },
+          {
+            "code": "E0202",
+            "name": "Wages",
+            "nature": "debit"
+          },
+          {
+            "code": "E0203",
+            "name": "Manufacturing Expenses",
+            "nature": "debit"
+          },
+          {
+            "code": "E03",
+            "name": "Indirect Expenses",
+            "nature": "debit"
+          },
+          {
+            "code": "E0301",
+            "name": "Salaries & Wages",
+            "nature": "debit"
+          },
+          {
+            "code": "E0302",
+            "name": "Rent & Rates",
+            "nature": "debit"
+          },
+          {
+            "code": "E0303",
+            "name": "Electricity & Water",
+            "nature": "debit"
+          },
+          {
+            "code": "E0304",
+            "name": "Telephone & Internet",
+            "nature": "debit"
+          },
+          {
+            "code": "E0305",
+            "name": "Printing & Stationery",
+            "nature": "debit"
+          },
+          {
+            "code": "E0306",
+            "name": "Travelling & Conveyance",
+            "nature": "debit"
+          },
+          {
+            "code": "E0307",
+            "name": "Legal & Professional Fees",
+            "nature": "debit"
+          },
+          {
+            "code": "E0308",
+            "name": "Bank Charges",
+            "nature": "debit"
+          },
+          {
+            "code": "E0309",
+            "name": "Interest Paid",
+            "nature": "debit"
+          },
+          {
+            "code": "E0310",
+            "name": "Discount Allowed",
+            "nature": "debit"
+          },
+          {
+            "code": "E0311",
+            "name": "Depreciation",
+            "nature": "debit"
+          },
+          {
+            "code": "E0312",
+            "name": "Bad Debts",
+            "nature": "debit"
+          },
+          {
+            "code": "E0313",
+            "name": "Repairs & Maintenance",
+            "nature": "debit"
+          },
+          {
+            "code": "E0314",
+            "name": "Insurance",
+            "nature": "debit"
+          },
+          {
+            "code": "E0315",
+            "name": "Advertisement",
+            "nature": "debit"
+          },
+          {
+            "code": "E0316",
+            "name": "Carriage Outward",
+            "nature": "debit"
+          },
+          {
+            "code": "E0317",
+            "name": "Miscellaneous Expenses",
+            "nature": "debit"
+          },
+          {
+            "code": "E0318",
+            "name": "Round Off",
+            "nature": "debit"
+          }
+        ]
+      },
+      "nature_distribution": {
+        "debit": 43,
+        "credit": 26
+      }
+    },
+    "double_entry_reconciliation": {
+      "test_scenarios": [
+        {
+          "scenario": "Manual Journal Entry Test",
+          "voucher_number": "JV/AUDIT/20260220192535",
+          "debit_total": 10000.0,
+          "credit_total": 10000.0,
+          "is_balanced": true,
+          "entries": [
+            {
+              "account": "Cash",
+              "debit": 10000.0,
+              "credit": 0.0
+            },
+            {
+              "account": "Sales Account",
+              "debit": 0.0,
+              "credit": 10000.0
+            }
+          ]
+        }
+      ],
+      "all_vouchers_balanced": true,
+      "total_vouchers_checked": 1000,
+      "imbalanced_vouchers": []
+    },
+    "fifo_valuation": {
+      "test_scenarios": [
+        {
+          "item": "FIFO Test Item - Vanilla Ice Cream",
+          "initial_stock": 450,
+          "initial_value": 36500.0,
+          "consumed_qty": 120,
+          "fifo_cost": 9100.0,
+          "fifo_avg_cost": 75.83333333333333,
+          "consumed_batches": [
+            {
+              "batch": "BATCH-001",
+              "date": "2025-01-01",
+              "qty_consumed": 100,
+              "rate": 75.0,
+              "cost": 7500.0
+            },
+            {
+              "batch": "BATCH-002",
+              "date": "2025-02-01",
+              "qty_consumed": 20,
+              "rate": 80.0,
+              "cost": 1600.0
+            }
+          ],
+          "remaining_qty": 330,
+          "remaining_value": 27400.0
+        }
+      ],
+      "fifo_logic_verified": true,
+      "stock_summary": {}
+    },
+    "gst_validation": {
+      "gstr1_structure": {
+        "template_valid": true,
+        "sections": [
+          "gstin",
+          "fp",
+          "gt",
+          "cur_gt",
+          "b2b",
+          "b2cl",
+          "b2cs",
+          "cdnr",
+          "cdnur",
+          "exp",
+          "hsn",
+          "nil",
+          "doc_issue"
+        ],
+        "sample_b2b": {
+          "ctin": "29AADCB2230M1ZP",
+          "inv": [
+            {
+              "inum": "INV/2025-26/00001",
+              "idt": "15-12-2025",
+              "val": 118000.0,
+              "pos": "29",
+              "rchrg": "N",
+              "inv_typ": "R",
+              "itms": [
+                {
+                  "num": 1,
+                  "itm_det": {
+                    "txval": 100000.0,
+                    "rt": 18,
+                    "iamt": 18000.0,
+                    "csamt": 0
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "gstr3b_structure": {
+        "template_valid": true,
+        "sections": [
+          "gstin",
+          "ret_period",
+          "sup_details",
+          "itc_elg",
+          "intr_ltfee",
+          "inward_sup"
+        ],
+        "summary": {
+          "taxable_value": 100000,
+          "cgst": 9000,
+          "sgst": 9000
+        }
+      },
+      "hsn_summary": {
+        "hsn_codes_count": 6
+      },
+      "state_codes_loaded": true
+    },
+    "performance_benchmark": {
+      "tests": [
+        {
+          "test": "Bulk Insert (1000 docs)",
+          "time_seconds": 0.016,
+          "docs_per_second": 64043.0,
+          "status": "PASS"
+        },
+        {
+          "test": "Range Query",
+          "time_seconds": 0.002,
+          "results_count": 500,
+          "status": "PASS"
+        },
+        {
+          "test": "Aggregation (sum/avg)",
+          "time_seconds": 0.001,
+          "status": "PASS"
+        },
+        {
+          "test": "Bulk Update",
+          "time_seconds": 0.004,
+          "status": "PASS"
+        }
+      ],
+      "overall_performance": "PASS"
+    },
+    "rbac_enforcement": {
+      "roles_defined": [
+        {
+          "code": "ADMIN",
+          "name": "Administrator",
+          "permissions_count": 1
+        },
+        {
+          "code": "MANAGER",
+          "name": "Branch Manager",
+          "permissions_count": 7
+        },
+        {
+          "code": "ACCOUNTANT",
+          "name": "Accountant",
+          "permissions_count": 7
+        },
+        {
+          "code": "SALES_EXEC",
+          "name": "Sales Executive",
+          "permissions_count": 5
+        },
+        {
+          "code": "PURCHASE_EXEC",
+          "name": "Purchase Executive",
+          "permissions_count": 5
+        },
+        {
+          "code": "INVENTORY_CLERK",
+          "name": "Inventory Clerk",
+          "permissions_count": 4
+        },
+        {
+          "code": "VIEWER",
+          "name": "View Only",
+          "permissions_count": 2
+        }
+      ],
+      "permission_matrix": {},
+      "enforcement_test": {
+        "ADMIN_security.users.delete": {
+          "result": true,
+          "expected": true,
+          "passed": true
+        },
+        "SALES_EXEC_sales.invoices.create": {
+          "result": false,
+          "expected": true,
+          "passed": false
+        },
+        "SALES_EXEC_accounting.vouchers.create": {
+          "result": false,
+          "expected": false,
+          "passed": true
+        },
+        "ACCOUNTANT_gst.gstr1.read": {
+          "result": false,
+          "expected": true,
+          "passed": false
+        },
+        "VIEWER_sales.invoices.create": {
+          "result": false,
+          "expected": false,
+          "passed": true
+        },
+        "VIEWER_reports.trial_balance.read": {
+          "result": true,
+          "expected": true,
+          "passed": true
+        }
+      },
+      "enforcement_verified": false
+    },
+    "audit_log_integrity": {
+      "sample_logs": [],
+      "hash_verification": [
+        {
+          "action": "USER_LOGIN",
+          "stored_hash": "86edee962fbfd678...",
+          "calculated_hash": "86edee962fbfd678...",
+          "valid": true
+        },
+        {
+          "action": "VOUCHER_CREATED",
+          "stored_hash": "80d02cf8e554235a...",
+          "calculated_hash": "80d02cf8e554235a...",
+          "valid": true
+        },
+        {
+          "action": "INVOICE_CREATED",
+          "stored_hash": "8f73b6d448230b21...",
+          "calculated_hash": "8f73b6d448230b21...",
+          "valid": true
+        },
+        {
+          "action": "ROLE_MODIFIED",
+          "stored_hash": "1c7a9d5b51931c61...",
+          "calculated_hash": "1c7a9d5b51931c61...",
+          "valid": true
+        }
+      ],
+      "integrity_verified": true,
+      "tamper_detection_working": true
+    },
+    "backup_restore": {
+      "backup_test": {
+        "documents_backed_up": 3,
+        "backup_size_bytes": 398,
+        "backup_timestamp": "2026-02-20T19:25:35.579542+00:00"
+      },
+      "restore_test": {
+        "documents_restored": 3,
+        "data_integrity_verified": true
+      },
+      "functionality_verified": true
+    },
+    "multi_branch": {
+      "branches": [
+        {
+          "code": "HO",
+          "name": "Head Office - Patan",
+          "is_head_office": true
+        },
+        {
+          "code": "BR002",
+          "name": "Ahmedabad Branch",
+          "is_head_office": false
+        },
+        {
+          "code": "BR003",
+          "name": "Surat Branch",
+          "is_head_office": false
+        },
+        {
+          "code": "BR004",
+          "name": "Vadodara Branch",
+          "is_head_office": false
+        },
+        {
+          "code": "BR005",
+          "name": "Rajkot Branch",
+          "is_head_office": false
+        }
+      ],
+      "segregation_test": {},
+      "data_isolation_verified": true
+    }
+  },
+  "summary": {
+    "overall_status": "PARTIAL PASS",
+    "sections_passed": 8,
+    "total_sections": 10,
+    "sections_status": {
+      "database_schema": "PARTIAL",
+      "chart_of_accounts": "PASS",
+      "double_entry_reconciliation": "PASS",
+      "fifo_valuation": "PASS",
+      "gst_validation": "PASS",
+      "performance_benchmark": "PASS",
+      "rbac_enforcement": "FAIL",
+      "audit_log_integrity": "PASS",
+      "backup_restore": "PASS",
+      "multi_branch": "PASS"
+    }
+  }
+}
