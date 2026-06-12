@@ -3,15 +3,31 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Building2,
+<<<<<<< HEAD
   Truck, 
   BookOpen,
   BarChart3,
+=======
+  Package, 
+  Users, 
+  Truck, 
+  FileText,
+  BookOpen,
+  BarChart3,
+  Receipt,
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
   Settings,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   ChevronUp,
   Warehouse,
+<<<<<<< HEAD
+=======
+  CreditCard,
+  FileSpreadsheet,
+  Calculator,
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
   IndianRupee
 } from 'lucide-react';
 import './Sidebar.css';
@@ -31,8 +47,13 @@ const Sidebar = ({ collapsed, onToggle }) => {
         { label: 'Account Groups', path: '/masters/account-groups' },
         { label: 'Ledgers', path: '/masters/ledgers' },
         { label: 'Items', path: '/masters/items' },
+<<<<<<< HEAD
         { label: 'Stock Maintenance', path: '/masters/stock-maintenance' },
         { label: 'Out Qty', path: '/masters/stock-out-entry' },
+=======
+        { label: 'Customers', path: '/masters/customers' },
+        { label: 'Suppliers', path: '/masters/suppliers' },
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
       ]
     },
     { 
@@ -47,22 +68,49 @@ const Sidebar = ({ collapsed, onToggle }) => {
       ]
     },
     { 
+<<<<<<< HEAD
       icon: Truck, 
       label: 'Inventory In', 
       children: [
         { label: 'In Entry', path: '/purchase/invoice' },
         { label: 'In History', path: '/purchase/history' },
+=======
+      icon: Receipt, 
+      label: 'Sales', 
+      children: [
+        { label: 'Quotation', path: '/sales/quotation' },
+        { label: 'Sales Order', path: '/sales/order' },
+        { label: 'GST Invoice', path: '/sales/invoice/gst' },
+        { label: 'Kacha Bill', path: '/sales/invoice/kacha' },
+        { label: 'Sales History', path: '/sales/history' },
+      ]
+    },
+    { 
+      icon: Truck, 
+      label: 'Purchase', 
+      children: [
+        { label: 'Purchase Order', path: '/purchase/order' },
+        { label: 'Purchase Entry', path: '/purchase/invoice' },
+        { label: 'Purchase History', path: '/purchase/history' },
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
       ]
     },
     { 
       icon: Warehouse, 
       label: 'Inventory', 
       children: [
+<<<<<<< HEAD
         { label: 'Out Entry', path: '/inventory/out-entry' },
         { label: 'Out History', path: '/inventory/out-history' },
         { label: 'Inventory In / Out', path: '/inventory/ledger' },
         { label: 'Ready Stock', path: '/inventory/stock' },
         { label: 'Stock Maintenance', path: '/inventory/adjustment' },
+=======
+        { label: 'Stock Summary', path: '/inventory/stock' },
+        { label: 'Stock Ledger', path: '/inventory/ledger' },
+        { label: 'Stock Transfer', path: '/inventory/transfer' },
+        { label: 'Stock Adjustment', path: '/inventory/adjustment' },
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
       ]
     },
     { 

@@ -12,12 +12,21 @@ const ItemMaster = () => {
     name: '',
     sku: '',
     category: '',
+<<<<<<< HEAD
     hsn: '',
     gst_rate: 0,
     unit: 'Box',
     cost_price: 0,
     selling_price: 0,
     reorder_level: 500,
+=======
+    hsn: '2105',
+    gst_rate: 12,
+    unit: 'Box',
+    cost_price: 0,
+    selling_price: 0,
+    reorder_level: 10,
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     opening_stock: 0,
   });
 
@@ -77,12 +86,21 @@ const ItemMaster = () => {
       name: '',
       sku: '',
       category: '',
+<<<<<<< HEAD
       hsn: '',
       gst_rate: 0,
       unit: 'Box',
       cost_price: 0,
       selling_price: 0,
       reorder_level: 500,
+=======
+      hsn: '2105',
+      gst_rate: 12,
+      unit: 'Box',
+      cost_price: 0,
+      selling_price: 0,
+      reorder_level: 10,
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
       opening_stock: 0,
     });
   };
@@ -137,6 +155,17 @@ const ItemMaster = () => {
                   <input name="category" value={formData.category} onChange={handleChange} required data-testid="item-category-input" />
                 </div>
                 <div className="form-group">
+<<<<<<< HEAD
+=======
+                  <label>HSN Code</label>
+                  <input name="hsn" value={formData.hsn} onChange={handleChange} data-testid="item-hsn-input" />
+                </div>
+                <div className="form-group">
+                  <label>GST Rate (%)</label>
+                  <input type="number" name="gst_rate" value={formData.gst_rate} onChange={handleChange} data-testid="item-gst-input" />
+                </div>
+                <div className="form-group">
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                   <label>Unit</label>
                   <select name="unit" value={formData.unit} onChange={handleChange} data-testid="item-unit-select">
                     <option>Box</option>
@@ -146,6 +175,17 @@ const ItemMaster = () => {
                   </select>
                 </div>
                 <div className="form-group">
+<<<<<<< HEAD
+=======
+                  <label>Cost Price</label>
+                  <input type="number" step="0.01" name="cost_price" value={formData.cost_price} onChange={handleChange} data-testid="item-cost-input" />
+                </div>
+                <div className="form-group">
+                  <label>Selling Price</label>
+                  <input type="number" step="0.01" name="selling_price" value={formData.selling_price} onChange={handleChange} data-testid="item-price-input" />
+                </div>
+                <div className="form-group">
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                   <label>Reorder Level</label>
                   <input type="number" name="reorder_level" value={formData.reorder_level} onChange={handleChange} />
                 </div>
@@ -175,7 +215,15 @@ const ItemMaster = () => {
                 <th>SKU</th>
                 <th>Name</th>
                 <th>Category</th>
+<<<<<<< HEAD
                 <th>Unit</th>
+=======
+                <th>HSN</th>
+                <th>GST %</th>
+                <th>Unit</th>
+                <th>Cost Price</th>
+                <th>Selling Price</th>
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                 <th>Actions</th>
               </tr>
             </thead>
@@ -185,7 +233,15 @@ const ItemMaster = () => {
                   <td className="data-value">{item.sku}</td>
                   <td>{item.name}</td>
                   <td>{item.category}</td>
+<<<<<<< HEAD
                   <td>{item.unit}</td>
+=======
+                  <td className="data-value">{item.hsn}</td>
+                  <td className="data-value">{item.gst_rate}%</td>
+                  <td>{item.unit}</td>
+                  <td className="data-value">₹{item.cost_price.toFixed(2)}</td>
+                  <td className="data-value">₹{item.selling_price.toFixed(2)}</td>
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                   <td>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button className="btn btn-ghost" onClick={() => handleEdit(item)} data-testid="edit-item-btn">

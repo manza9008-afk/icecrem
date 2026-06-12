@@ -178,6 +178,7 @@ html, body, #root {
   background: var(--bg-selected);
 }
 
+<<<<<<< HEAD
 .data-grid tbody tr.low-stock-row,
 .data-grid tbody tr.low-stock-row:nth-child(even) {
   background: #fff1f2;
@@ -187,6 +188,8 @@ html, body, #root {
   background: #ffe4e6;
 }
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 .data-grid td {
   padding: 6px 10px;
   vertical-align: middle;
@@ -648,9 +651,13 @@ html, body, #root {
 
 /* Status Badges */
 .badge {
+<<<<<<< HEAD
   display: inline-flex;
   align-items: center;
   gap: 4px;
+=======
+  display: inline-block;
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
   padding: 2px 8px;
   font-size: 10px;
   font-weight: 600;

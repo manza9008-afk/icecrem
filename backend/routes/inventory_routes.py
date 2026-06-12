@@ -3,8 +3,11 @@ HOOREN ERP - Inventory Routes
 Items, Stock, Batches, Transfers, Adjustments
 """
 from fastapi import APIRouter, HTTPException, Depends
+<<<<<<< HEAD
 from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
@@ -16,11 +19,16 @@ from utils import get_current_user
 from services.inventory_service import (
     create_stock_batch,
     consume_stock_fifo,
+<<<<<<< HEAD
     create_stock_transaction,
     get_stock_summary,
     get_stock_ledger,
     get_stock_movements,
     get_ready_stock_summary,
+=======
+    get_stock_summary,
+    get_stock_ledger,
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     process_stock_adjustment,
     process_inter_branch_transfer,
     get_next_batch_number,
@@ -148,6 +156,7 @@ async def get_stock(
     return result
 
 
+<<<<<<< HEAD
 @router.get("/ready-stock")
 async def get_ready_stock(
     branch_id: Optional[str] = None,
@@ -158,6 +167,8 @@ async def get_ready_stock(
     return await get_ready_stock_summary(db, branch_id, godown_id)
 
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 @router.get("/stock/batches")
 async def get_batches(
     item_id: Optional[str] = None,
@@ -211,6 +222,7 @@ async def get_item_stock_ledger(
     return result
 
 
+<<<<<<< HEAD
 @router.get("/stock/movements")
 async def get_inventory_movements(
     branch_id: Optional[str] = None,
@@ -350,6 +362,8 @@ async def get_manual_stock_outwards(
     return outwards
 
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 @router.get("/stock/expiring")
 async def get_expiring_stock(
     days: int = 30,
@@ -388,7 +402,11 @@ async def create_stock_adjustment(
 ):
     """Create stock adjustment"""
     result = await process_stock_adjustment(db, adjustment_data, current_user["username"])
+<<<<<<< HEAD
     return jsonable_encoder(result, custom_encoder={ObjectId: str})
+=======
+    return result
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 
 
 @router.get("/stock/adjustments")
@@ -412,6 +430,7 @@ async def get_adjustments(
         query["adjustment_date"] = date_query
     
     adjustments = await db.stock_adjustments.find(query, {"_id": 0}).sort("adjustment_date", -1).to_list(1000)
+<<<<<<< HEAD
 
     for adjustment in adjustments:
         godown = await db.godowns.find_one({"id": adjustment.get("godown_id")}, {"_id": 0})
@@ -420,6 +439,8 @@ async def get_adjustments(
         adjustment["branch_name"] = branch["name"] if branch else ""
         adjustment["item_count"] = len(adjustment.get("items", []))
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     return adjustments
 
 

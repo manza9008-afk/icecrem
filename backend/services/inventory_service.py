@@ -77,6 +77,7 @@ async def create_stock_batch(
     }
     
     await db.stock_batches.insert_one(batch_doc)
+<<<<<<< HEAD
 
     transaction_type = {
         "purchase_invoice": "purchase",
@@ -102,6 +103,8 @@ async def create_stock_batch(
         narration=f"Stock inward via {reference_type.replace('_', ' ')}"
     )
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     return batch_doc
 
 
@@ -295,6 +298,7 @@ async def get_stock_summary(
     return summaries
 
 
+<<<<<<< HEAD
 def get_item_size_label(item: Optional[Dict[str, Any]]) -> str:
     """Return the best available size label for inventory display."""
     if not item:
@@ -490,6 +494,8 @@ async def get_ready_stock_summary(
     return ready_stock
 
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 async def get_stock_ledger(
     db: AsyncIOMotorDatabase,
     item_id: str,
@@ -609,8 +615,12 @@ async def process_stock_adjustment(
     
     for item in adjustment_data["items"]:
         diff = item["difference"]
+<<<<<<< HEAD
         unit_cost = item.get("unit_cost", item.get("rate", 0))
         value_diff = item.get("value_difference", item.get("value", abs(diff) * unit_cost))
+=======
+        value_diff = item["value_difference"]
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
         
         if diff < 0:  # Shortage
             total_shortage += abs(value_diff)
@@ -630,7 +640,11 @@ async def process_stock_adjustment(
             await create_stock_batch(
                 db, item["item_id"], adjustment_data["branch_id"],
                 adjustment_data["godown_id"], batch_number, diff,
+<<<<<<< HEAD
                 unit_cost, adjustment_data["adjustment_date"],
+=======
+                item["unit_cost"], adjustment_data["adjustment_date"],
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                 None, None, None, "adjustment", adjustment_number, adjustment_number
             )
     
@@ -643,7 +657,11 @@ async def process_stock_adjustment(
         "adjustment_date": adjustment_data["adjustment_date"],
         "reason": adjustment_data["reason"],
         "items": adjustment_data["items"],
+<<<<<<< HEAD
         "narration": adjustment_data.get("narration") or adjustment_data.get("remarks"),
+=======
+        "narration": adjustment_data.get("narration"),
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
         "total_shortage": total_shortage,
         "total_excess": total_excess,
         "net_value": total_excess - total_shortage,

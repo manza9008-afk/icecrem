@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { AlertTriangle, Package, Printer } from 'lucide-react';
 import api, { formatNumber } from '../../services/api';
 
@@ -37,20 +38,40 @@ const StockSummary = ({ currentBranch }) => {
       if (selectedGodown) params.append('godown_id', selectedGodown);
       const query = params.toString() ? `?${params.toString()}` : '';
       const response = await api.get(`/inventory/ready-stock${query}`);
+=======
+import { Package } from 'lucide-react';
+import api, { formatCurrency, formatNumber } from '../../services/api';
+
+const StockSummary = ({ currentBranch }) => {
+  const [stock, setStock] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { fetchStock(); }, [currentBranch]);
+
+  const fetchStock = async () => {
+    try {
+      const branchParam = currentBranch?.id ? `?branch_id=${currentBranch.id}` : '';
+      const response = await api.get(`/inventory/stock${branchParam}`);
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
       setStock(response.data);
     } catch (error) { console.error('Error:', error); }
     finally { setLoading(false); }
   };
 
+<<<<<<< HEAD
   const totalInQty = stock.reduce((sum, item) => sum + (item.in_qty || 0), 0);
   const totalOutQty = stock.reduce((sum, item) => sum + (item.out_qty || 0), 0);
   const totalStockQty = stock.reduce((sum, item) => sum + (item.ready_qty || 0), 0);
   const alertCount = stock.filter(item => item.is_low_stock).length;
+=======
+  const totalValue = stock.reduce((sum, s) => sum + s.total_value, 0);
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
   return (
     <div data-testid="stock-summary">
+<<<<<<< HEAD
       <div className="page-header">
         <div><h1>Stock</h1><p className="page-subtitle">{currentBranch?.name || 'All Branches'} | Item-wise in and out quantity view</p></div>
         <button className="btn btn-secondary" onClick={() => window.print()}><Printer size={16} /> Print</button>
@@ -65,6 +86,9 @@ const StockSummary = ({ currentBranch }) => {
           </select>
         </div>
       </div>
+=======
+      <div className="page-header"><div><h1>Stock Summary</h1><p className="page-subtitle">{currentBranch?.name || 'All Branches'} | FIFO Valuation</p></div></div>
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
       
       <div className="stats-grid">
         <div className="stat-card">
@@ -72,6 +96,7 @@ const StockSummary = ({ currentBranch }) => {
           <div><div className="stat-label">Total Items</div><div className="stat-value">{stock.length}</div></div>
         </div>
         <div className="stat-card">
+<<<<<<< HEAD
           <div className="stat-icon" style={{background: '#fff7ed'}}><Package size={24} color="#ea580c" /></div>
           <div><div className="stat-label">In Qty</div><div className="stat-value">{formatNumber(totalInQty, 2)}</div></div>
         </div>
@@ -86,11 +111,16 @@ const StockSummary = ({ currentBranch }) => {
         <div className="stat-card">
           <div className="stat-icon" style={{background: '#fff1f2'}}><Package size={24} color="#e11d48" /></div>
           <div><div className="stat-label">Low Stock Alerts</div><div className="stat-value">{alertCount}</div></div>
+=======
+          <div className="stat-icon" style={{background: '#ebf8ff'}}><Package size={24} color="#3182ce" /></div>
+          <div><div className="stat-label">Total Stock Value</div><div className="stat-value">{formatCurrency(totalValue)}</div></div>
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
         </div>
       </div>
 
       <div className="card">
         <table className="data-grid">
+<<<<<<< HEAD
           <thead><tr><th>Item Name</th><th className="text-right">In Qty</th><th className="text-right">Out Qty</th><th className="text-right">Stock Qty</th><th className="text-right">Alert Qty</th><th>Alert</th></tr></thead>
           <tbody>
             {stock.map((s, i) => {
@@ -113,6 +143,21 @@ const StockSummary = ({ currentBranch }) => {
                 </tr>
               );
             })}
+=======
+          <thead><tr><th>Item Code</th><th>Item Name</th><th>Godown</th><th className="text-right">Qty</th><th className="text-right">Avg Cost</th><th className="text-right">Total Value</th><th className="text-right">Batches</th></tr></thead>
+          <tbody>
+            {stock.map((s, i) => (
+              <tr key={i}>
+                <td><strong>{s.item_code}</strong></td>
+                <td>{s.item_name}</td>
+                <td>{s.godown_name}</td>
+                <td className="numeric">{formatNumber(s.total_quantity, 2)}</td>
+                <td className="numeric">{formatCurrency(s.average_cost)}</td>
+                <td className="numeric">{formatCurrency(s.total_value)}</td>
+                <td className="numeric">{s.batch_count}</td>
+              </tr>
+            ))}
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
           </tbody>
         </table>
         {stock.length === 0 && <div className="empty-state"><p>No stock found</p></div>}

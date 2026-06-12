@@ -12,6 +12,7 @@ router = APIRouter(prefix="/api/branches", tags=["branches"])
 from server import db
 from utils import get_current_user
 
+<<<<<<< HEAD
 STOCK_LOCATIONS = [
     {"code_suffix": "STORE", "name": "Store", "is_default": True},
     {"code_suffix": "COLD", "name": "Cold Room", "is_default": False},
@@ -57,6 +58,8 @@ async def ensure_stock_locations(branch_id: str, branch_code: str = "", address:
     order = {location["name"]: index for index, location in enumerate(STOCK_LOCATIONS)}
     return sorted(godowns, key=lambda g: order.get(g.get("name"), 99))
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 
 @router.post("")
 async def create_branch(branch_data: dict, current_user: dict = Depends(get_current_user)):
@@ -75,7 +78,22 @@ async def create_branch(branch_data: dict, current_user: dict = Depends(get_curr
     
     await db.branches.insert_one(branch_doc)
     
+<<<<<<< HEAD
     await ensure_stock_locations(branch_doc["id"], branch_data["code"], branch_data.get("address", ""))
+=======
+    # Create default godown for this branch
+    godown_doc = {
+        "id": str(uuid.uuid4()),
+        "code": f"{branch_data['code']}-MAIN",
+        "name": "Main Godown",
+        "branch_id": branch_doc["id"],
+        "address": branch_data.get("address", ""),
+        "is_default": True,
+        "is_active": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.godowns.insert_one(godown_doc)
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     
     branch_doc.pop("_id", None)
     return branch_doc
@@ -198,10 +216,13 @@ async def get_godowns(
     if is_active is not None:
         query["is_active"] = is_active
     
+<<<<<<< HEAD
     branch = await db.branches.find_one({"id": branch_id}, {"_id": 0}) or {}
     if is_active:
         return await ensure_stock_locations(branch_id, branch.get("code", ""), branch.get("address", ""))
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     godowns = await db.godowns.find(query, {"_id": 0}).to_list(200)
     return godowns
 

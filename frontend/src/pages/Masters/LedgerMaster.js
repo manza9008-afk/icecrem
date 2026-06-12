@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Search } from 'lucide-react';
+<<<<<<< HEAD
 import api from '../../services/api';
+=======
+import api, { formatCurrency } from '../../services/api';
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 
 const LedgerMaster = ({ currentBranch }) => {
   const [ledgers, setLedgers] = useState([]);
@@ -119,6 +123,11 @@ const LedgerMaster = ({ currentBranch }) => {
               <th>Ledger Name</th>
               <th>Group</th>
               <th>Type</th>
+<<<<<<< HEAD
+=======
+              <th className="text-right">Opening Balance</th>
+              <th className="text-right">Current Balance</th>
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
               <th className="text-center">Actions</th>
             </tr>
           </thead>
@@ -129,6 +138,11 @@ const LedgerMaster = ({ currentBranch }) => {
                 <td>{ledger.name} {ledger.is_party && <span className="badge badge-info" style={{marginLeft: '6px'}}>Party</span>}</td>
                 <td>{ledger.group_name}</td>
                 <td>{ledger.account_type}</td>
+<<<<<<< HEAD
+=======
+                <td className="numeric">{formatCurrency(ledger.opening_balance)} <span className="badge badge-secondary">{ledger.balance_type?.toUpperCase()}</span></td>
+                <td className="numeric">{formatCurrency(ledger.current_balance)}</td>
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                 <td className="text-center">
                   <button className="btn btn-sm btn-secondary" onClick={() => handleEdit(ledger)}><Edit2 size={14} /></button>
                 </td>
@@ -166,7 +180,24 @@ const LedgerMaster = ({ currentBranch }) => {
                       {groups.map(g => <option key={g.id} value={g.id}>{g.code} - {g.name}</option>)}
                     </select>
                   </div>
+<<<<<<< HEAD
                 </div>
+=======
+                  <div className="form-group">
+                    <label className="form-label">Balance Type</label>
+                    <select className="form-control" value={formData.balance_type} onChange={e => setFormData({...formData, balance_type: e.target.value})}>
+                      <option value="debit">Debit</option>
+                      <option value="credit">Credit</option>
+                    </select>
+                  </div>
+                </div>
+                {!editingLedger && (
+                  <div className="form-group">
+                    <label className="form-label">Opening Balance</label>
+                    <input type="number" step="0.01" className="form-control" value={formData.opening_balance} onChange={e => setFormData({...formData, opening_balance: parseFloat(e.target.value) || 0})} />
+                  </div>
+                )}
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                 <div className="form-group">
                   <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
                     <input type="checkbox" checked={formData.is_party} onChange={e => setFormData({...formData, is_party: e.target.checked})} />

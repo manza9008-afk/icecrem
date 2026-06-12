@@ -163,6 +163,7 @@ async def get_dashboard_stats(
         {"$group": {"_id": None, "total": {"$sum": "$grand_total"}}}
     ]).to_list(1)
     
+<<<<<<< HEAD
     # Low stock items based on each item's configured alert quantity.
     stock_match = {"is_active": True}
     if branch_id:
@@ -194,6 +195,13 @@ async def get_dashboard_stats(
 
         if threshold > 0 and float(stock_item.get("ready_qty") or 0) <= threshold:
             low_stock_count += 1
+=======
+    # Low stock items
+    low_stock_count = await db.stock_batches.count_documents({
+        "remaining_quantity": {"$gt": 0, "$lt": 10},
+        "is_active": True
+    })
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     
     # Outstanding receivables
     ledger_query = {"is_party": True, "is_active": True}
@@ -404,6 +412,7 @@ app.include_router(advanced_reports_router)
 app.include_router(pdf_router)
 app.include_router(system_router)
 
+<<<<<<< HEAD
 
 def get_cors_origins() -> List[str]:
     raw_origins = [origin.strip() for origin in os.environ.get("CORS_ORIGINS", "*").split(",") if origin.strip()]
@@ -424,11 +433,17 @@ def get_cors_origins() -> List[str]:
     return sorted(origins)
 
 
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 # CORS
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
+<<<<<<< HEAD
     allow_origins=get_cors_origins(),
+=======
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -504,17 +519,26 @@ async def startup_db():
         }
         await db.branches.insert_one(default_branch)
         
+<<<<<<< HEAD
         # Create default stock locations
         store_godown = {
             "id": str(uuid.uuid4()),
             "code": "HO-STORE",
             "name": "Store",
+=======
+        # Create default godown
+        default_godown = {
+            "id": str(uuid.uuid4()),
+            "code": "HO-MAIN",
+            "name": "Main Godown",
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
             "branch_id": default_branch["id"],
             "address": default_branch["address"],
             "is_default": True,
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
+<<<<<<< HEAD
         cold_room = {
             "id": str(uuid.uuid4()),
             "code": "HO-COLD",
@@ -526,6 +550,9 @@ async def startup_db():
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.godowns.insert_many([store_godown, cold_room])
+=======
+        await db.godowns.insert_one(default_godown)
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
         
         # Seed Chart of Accounts
         from services.accounting_service import seed_chart_of_accounts

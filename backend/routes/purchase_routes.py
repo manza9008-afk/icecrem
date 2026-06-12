@@ -166,12 +166,15 @@ async def create_purchase_invoice(invoice_data: dict, current_user: dict = Depen
     # Get company settings for state code
     company = await db.company_settings.find_one({})
     buyer_state_code = company.get("state_code", "24") if company else "24"
+<<<<<<< HEAD
     invoice_data["supplier_name"] = invoice_data.get("supplier_name") or "Inventory Inward"
     invoice_data["supplier_address"] = invoice_data.get("supplier_address") or (company.get("address", "") if company else "")
     invoice_data["supplier_state"] = invoice_data.get("supplier_state") or (company.get("state", "Gujarat") if company else "Gujarat")
     invoice_data["supplier_state_code"] = invoice_data.get("supplier_state_code") or buyer_state_code
     invoice_data["supplier_invoice_number"] = invoice_data.get("supplier_invoice_number") or "DIRECT-INWARD"
     invoice_data["supplier_invoice_date"] = invoice_data.get("supplier_invoice_date") or invoice_data.get("invoice_date")
+=======
+>>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     
     # Determine supply type
     seller_state_code = invoice_data.get("supplier_state_code", "24")
