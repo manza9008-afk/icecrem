@@ -1,0 +1,15 @@
+{
+  "name": "mongo-runtime",
+  "version": "1.0.0",
+  "main": "start-mongo.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "mongodb-memory-server": "^11.1.0"
+  }
+}

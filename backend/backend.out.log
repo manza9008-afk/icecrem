@@ -1,0 +1,35 @@
+INFO:     127.0.0.1:55083 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55517 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50604 - "OPTIONS /api/branches HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54671 - "OPTIONS /api/branches HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54671 - "OPTIONS /api/dashboard/stats HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:50604 - "OPTIONS /api/dashboard/recent-activity HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:57666 - "OPTIONS /api/dashboard/stats HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:51051 - "OPTIONS /api/dashboard/recent-activity HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54671 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54915 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54915 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54671 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:60121 - "OPTIONS /api/branches HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:57430 - "OPTIONS /api/branches HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:57938 - "OPTIONS /api/dashboard/stats HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:60121 - "OPTIONS /api/dashboard/recent-activity HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:58811 - "OPTIONS /api/dashboard/stats HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:55127 - "OPTIONS /api/dashboard/recent-activity HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:51974 - "OPTIONS /api/branches HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:56165 - "OPTIONS /api/branches HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:49919 - "OPTIONS /api/dashboard/stats HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:58936 - "OPTIONS /api/dashboard/recent-activity HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:51051 - "OPTIONS /api/dashboard/stats HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:59866 - "OPTIONS /api/dashboard/recent-activity HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:50508 - "OPTIONS /api/accounting/ledgers HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:53915 - "OPTIONS /api/accounting/account-groups HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:59478 - "OPTIONS /api/accounting/ledgers HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:54376 - "OPTIONS /api/accounting/account-groups HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:62333 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:49405 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:51431 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:56627 - "OPTIONS /api/inventory/items HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56631 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56634 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:53769 - "OPTIONS /api/inventory/items HTTP/1.1" 400 Bad Request
