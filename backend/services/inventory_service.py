@@ -4,16 +4,62 @@ FIFO valuation, batch tracking, stock management
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from motor.motor_asyncio import AsyncIOMotorDatabase
 import uuid
+
+DatabaseHandle = Any
+
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db_models import Branch as DBBranch
+from db_models import Godown as DBGodown
+from db_models import InterBranchTransfer as DBInterBranchTransfer
+from db_models import Item as DBItem
+from db_models import StockAdjustment as DBStockAdjustment
+from db_models import StockBatch as DBStockBatch
+from db_models import StockTransaction as DBStockTransaction
+
+
+def _is_sql_session(db: Any) -> bool:
+    return isinstance(db, AsyncSession)
+
+
+def _to_dict(obj):
+    if not obj:
+        return {}
+    data = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+    for key, value in data.items():
+        if isinstance(value, datetime):
+            data[key] = value.isoformat()
+    return data
 
 
 async def get_next_batch_number(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     item_id: str,
     branch_id: str
 ) -> str:
     """Generate next batch number for item"""
+    if _is_sql_session(db):
+        result = await db.execute(
+            select(DBStockBatch)
+            .where(DBStockBatch.item_id == item_id, DBStockBatch.branch_id == branch_id)
+            .order_by(desc(DBStockBatch.created_at))
+            .limit(1)
+        )
+        last_batch = result.scalar_one_or_none()
+        if last_batch:
+            try:
+                new_num = int(last_batch.batch_number.split("-")[-1]) + 1
+            except (ValueError, IndexError, AttributeError):
+                new_num = 1
+        else:
+            new_num = 1
+
+        item_res = await db.execute(select(DBItem).where(DBItem.id == item_id))
+        item = item_res.scalar_one_or_none()
+        item_code = item.code if item else "ITEM"
+        return f"{item_code}-{new_num:04d}"
     
     # Get last batch for this item
     last_batch = await db.stock_batches.find_one(
@@ -39,7 +85,7 @@ async def get_next_batch_number(
 
 
 async def create_stock_batch(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     item_id: str,
     branch_id: str,
     godown_id: str,
@@ -55,6 +101,42 @@ async def create_stock_batch(
     reference_number: str
 ) -> Dict[str, Any]:
     """Create a new stock batch"""
+    if _is_sql_session(db):
+        batch_doc = {
+            "id": str(uuid.uuid4()),
+            "item_id": item_id,
+            "branch_id": branch_id,
+            "godown_id": godown_id,
+            "batch_number": batch_number,
+            "quantity": quantity,
+            "remaining_quantity": quantity,
+            "unit_cost": unit_cost,
+            "purchase_date": purchase_date,
+            "expiry_date": expiry_date,
+            "mfg_date": mfg_date,
+            "supplier_id": supplier_id,
+            "reference_type": reference_type,
+            "reference_id": reference_id,
+            "reference_number": reference_number,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc),
+        }
+        db.add(DBStockBatch(**batch_doc))
+        await db.flush()
+
+        transaction_type = {
+            "purchase_invoice": "purchase",
+            "transfer": "transfer_in",
+            "adjustment": "adjustment_in",
+        }.get(reference_type, reference_type)
+        await create_stock_transaction(
+            db, item_id, branch_id, godown_id, transaction_type, quantity, unit_cost,
+            quantity * unit_cost, batch_doc["id"], batch_number, reference_type,
+            reference_id, reference_number, purchase_date,
+            narration=f"Stock inward via {reference_type.replace('_', ' ')}",
+        )
+        batch_doc["created_at"] = batch_doc["created_at"].isoformat()
+        return batch_doc
     
     batch_doc = {
         "id": str(uuid.uuid4()),
@@ -77,7 +159,6 @@ async def create_stock_batch(
     }
     
     await db.stock_batches.insert_one(batch_doc)
-<<<<<<< HEAD
 
     transaction_type = {
         "purchase_invoice": "purchase",
@@ -103,13 +184,11 @@ async def create_stock_batch(
         narration=f"Stock inward via {reference_type.replace('_', ' ')}"
     )
 
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     return batch_doc
 
 
 async def consume_stock_fifo(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     item_id: str,
     branch_id: str,
     godown_id: str,
@@ -120,6 +199,59 @@ async def consume_stock_fifo(
     transaction_date: str
 ) -> Dict[str, Any]:
     """Consume stock using FIFO method"""
+    if _is_sql_session(db):
+        consumed_batches = []
+        remaining_qty = quantity
+        total_cost = 0.0
+
+        result = await db.execute(
+            select(DBStockBatch)
+            .where(
+                DBStockBatch.item_id == item_id,
+                DBStockBatch.branch_id == branch_id,
+                DBStockBatch.godown_id == godown_id,
+                DBStockBatch.remaining_quantity > 0,
+                DBStockBatch.is_active == True,
+            )
+            .order_by(DBStockBatch.purchase_date)
+        )
+        batches = result.scalars().all()
+
+        for batch in batches:
+            if remaining_qty <= 0:
+                break
+            available = batch.remaining_quantity or 0
+            consume_qty = min(available, remaining_qty)
+            batch.remaining_quantity = available - consume_qty
+
+            batch_cost = consume_qty * (batch.unit_cost or 0)
+            total_cost += batch_cost
+            consumed_batches.append({
+                "batch_id": batch.id,
+                "batch_number": batch.batch_number,
+                "quantity": consume_qty,
+                "unit_cost": batch.unit_cost or 0,
+                "total_cost": batch_cost,
+            })
+
+            await create_stock_transaction(
+                db, item_id, branch_id, godown_id, "sale", -consume_qty,
+                batch.unit_cost or 0, -batch_cost, batch.id, batch.batch_number,
+                reference_type, reference_id, reference_number, transaction_date,
+            )
+            remaining_qty -= consume_qty
+
+        if remaining_qty > 0:
+            return {"success": False, "error": f"Insufficient stock. Short by {remaining_qty}", "consumed_batches": consumed_batches}
+
+        avg_cost = total_cost / quantity if quantity > 0 else 0
+        return {
+            "success": True,
+            "consumed_batches": consumed_batches,
+            "total_quantity": quantity,
+            "total_cost": total_cost,
+            "average_cost": avg_cost,
+        }
     
     consumed_batches = []
     remaining_qty = quantity
@@ -188,7 +320,7 @@ async def consume_stock_fifo(
 
 
 async def create_stock_transaction(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     item_id: str,
     branch_id: str,
     godown_id: str,
@@ -205,6 +337,44 @@ async def create_stock_transaction(
     narration: Optional[str] = None
 ) -> Dict[str, Any]:
     """Create stock transaction with running balance"""
+    if _is_sql_session(db):
+        result = await db.execute(
+            select(DBStockTransaction)
+            .where(
+                DBStockTransaction.item_id == item_id,
+                DBStockTransaction.branch_id == branch_id,
+                DBStockTransaction.godown_id == godown_id,
+            )
+            .order_by(desc(DBStockTransaction.created_at))
+            .limit(1)
+        )
+        last_trans = result.scalar_one_or_none()
+        running_qty = ((last_trans.running_qty if last_trans else 0) or 0) + quantity
+        running_value = ((last_trans.running_value if last_trans else 0) or 0) + total_cost
+        transaction_doc = {
+            "id": str(uuid.uuid4()),
+            "item_id": item_id,
+            "branch_id": branch_id,
+            "godown_id": godown_id,
+            "transaction_type": transaction_type,
+            "quantity": quantity,
+            "unit_cost": unit_cost,
+            "total_cost": total_cost,
+            "batch_id": batch_id,
+            "batch_number": batch_number,
+            "reference_type": reference_type,
+            "reference_id": reference_id,
+            "reference_number": reference_number,
+            "transaction_date": transaction_date,
+            "narration": narration,
+            "running_qty": running_qty,
+            "running_value": running_value,
+            "created_at": datetime.now(timezone.utc),
+        }
+        db.add(DBStockTransaction(**transaction_doc))
+        await db.flush()
+        transaction_doc["created_at"] = transaction_doc["created_at"].isoformat()
+        return transaction_doc
     
     # Get last transaction for running balance
     last_trans = await db.stock_transactions.find_one(
@@ -241,12 +411,54 @@ async def create_stock_transaction(
 
 
 async def get_stock_summary(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     item_id: Optional[str] = None,
     branch_id: Optional[str] = None,
     godown_id: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Get stock summary with FIFO valuation"""
+    if _is_sql_session(db):
+        query = select(DBStockBatch).where(DBStockBatch.is_active == True)
+        if item_id:
+            query = query.where(DBStockBatch.item_id == item_id)
+        if branch_id:
+            query = query.where(DBStockBatch.branch_id == branch_id)
+        if godown_id:
+            query = query.where(DBStockBatch.godown_id == godown_id)
+
+        result = await db.execute(query)
+        grouped: Dict[tuple, Dict[str, Any]] = {}
+        for batch in result.scalars().all():
+            key = (batch.item_id, batch.branch_id, batch.godown_id)
+            row = grouped.setdefault(key, {"total_quantity": 0.0, "total_value": 0.0, "batch_count": 0})
+            remaining = batch.remaining_quantity or 0
+            row["total_quantity"] += remaining
+            row["total_value"] += remaining * (batch.unit_cost or 0)
+            row["batch_count"] += 1
+
+        summaries = []
+        for (iid, bid, gid), row in grouped.items():
+            item_res = await db.execute(select(DBItem).where(DBItem.id == iid))
+            branch_res = await db.execute(select(DBBranch).where(DBBranch.id == bid))
+            godown_res = await db.execute(select(DBGodown).where(DBGodown.id == gid))
+            item = item_res.scalar_one_or_none()
+            branch = branch_res.scalar_one_or_none()
+            godown = godown_res.scalar_one_or_none()
+            avg_cost = row["total_value"] / row["total_quantity"] if row["total_quantity"] > 0 else 0
+            summaries.append({
+                "item_id": iid,
+                "item_name": item.name if item else "Unknown",
+                "item_code": item.code if item else "",
+                "branch_id": bid,
+                "branch_name": branch.name if branch else "Unknown",
+                "godown_id": gid,
+                "godown_name": godown.name if godown else "Unknown",
+                "total_quantity": row["total_quantity"],
+                "total_value": round(row["total_value"], 2),
+                "average_cost": round(avg_cost, 2),
+                "batch_count": row["batch_count"],
+            })
+        return summaries
     
     # Build aggregation pipeline
     match_stage = {"is_active": True}
@@ -297,8 +509,6 @@ async def get_stock_summary(
     
     return summaries
 
-
-<<<<<<< HEAD
 def get_item_size_label(item: Optional[Dict[str, Any]]) -> str:
     """Return the best available size label for inventory display."""
     if not item:
@@ -345,13 +555,56 @@ def get_low_stock_threshold(item: Optional[Dict[str, Any]]) -> float:
 
 
 async def get_stock_movements(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     branch_id: Optional[str] = None,
     godown_id: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Get flattened stock inward/outward movements for inventory screens."""
+    if _is_sql_session(db):
+        query = select(DBStockTransaction)
+        if branch_id:
+            query = query.where(DBStockTransaction.branch_id == branch_id)
+        if godown_id:
+            query = query.where(DBStockTransaction.godown_id == godown_id)
+        if start_date:
+            query = query.where(DBStockTransaction.transaction_date >= start_date)
+        if end_date:
+            query = query.where(DBStockTransaction.transaction_date <= end_date)
+        query = query.order_by(desc(DBStockTransaction.transaction_date), desc(DBStockTransaction.created_at))
+
+        result = await db.execute(query)
+        movements = []
+        item_cache = {}
+        godown_cache = {}
+        for trans in result.scalars().all():
+            if trans.item_id not in item_cache:
+                item_res = await db.execute(select(DBItem).where(DBItem.id == trans.item_id))
+                item_cache[trans.item_id] = _to_dict(item_res.scalar_one_or_none())
+            if trans.godown_id and trans.godown_id not in godown_cache:
+                godown_res = await db.execute(select(DBGodown).where(DBGodown.id == trans.godown_id))
+                godown_cache[trans.godown_id] = _to_dict(godown_res.scalar_one_or_none())
+            item = item_cache.get(trans.item_id, {})
+            qty = trans.quantity or 0
+            balance_qty = trans.running_qty or 0
+            low_stock_threshold = get_low_stock_threshold(item)
+            movements.append({
+                "id": trans.id,
+                "date": trans.transaction_date,
+                "item_id": trans.item_id,
+                "item_name": item.get("name", "Unknown"),
+                "size": get_item_size_label(item),
+                "godown_name": godown_cache.get(trans.godown_id, {}).get("name", ""),
+                "movement_type": get_movement_label(trans.reference_type or "", qty),
+                "reference_number": trans.reference_number or "",
+                "in_qty": qty if qty > 0 else 0,
+                "out_qty": abs(qty) if qty < 0 else 0,
+                "balance_qty": balance_qty,
+                "low_stock_threshold": round(low_stock_threshold, 2),
+                "is_low_stock": low_stock_threshold > 0 and balance_qty <= low_stock_threshold,
+            })
+        return movements
 
     query: Dict[str, Any] = {}
     if branch_id:
@@ -410,11 +663,31 @@ async def get_stock_movements(
 
 
 async def get_ready_stock_summary(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     branch_id: Optional[str] = None,
     godown_id: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Return simplified ready stock grouped by item."""
+    if _is_sql_session(db):
+        summary = await get_stock_summary(db, None, branch_id, godown_id)
+        ready_stock = []
+        for row in summary:
+            item_res = await db.execute(select(DBItem).where(DBItem.id == row["item_id"]))
+            item = _to_dict(item_res.scalar_one_or_none())
+            low_stock_threshold = get_low_stock_threshold(item)
+            ready_qty = row.get("total_quantity", 0)
+            ready_stock.append({
+                "item_id": row["item_id"],
+                "item_name": row.get("item_name", "Unknown"),
+                "size": get_item_size_label(item),
+                "in_qty": 0,
+                "out_qty": 0,
+                "ready_qty": round(ready_qty, 2),
+                "low_stock_threshold": round(low_stock_threshold, 2),
+                "is_low_stock": low_stock_threshold > 0 and ready_qty <= low_stock_threshold,
+            })
+        ready_stock.sort(key=lambda item: item["item_name"].lower())
+        return ready_stock
 
     match_stage: Dict[str, Any] = {"is_active": True}
     if branch_id:
@@ -494,10 +767,8 @@ async def get_ready_stock_summary(
     return ready_stock
 
 
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 async def get_stock_ledger(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     item_id: str,
     branch_id: Optional[str] = None,
     godown_id: Optional[str] = None,
@@ -505,6 +776,74 @@ async def get_stock_ledger(
     end_date: Optional[str] = None
 ) -> Dict[str, Any]:
     """Get detailed stock ledger for an item"""
+    if _is_sql_session(db):
+        query = select(DBStockTransaction).where(DBStockTransaction.item_id == item_id)
+        if branch_id:
+            query = query.where(DBStockTransaction.branch_id == branch_id)
+        if godown_id:
+            query = query.where(DBStockTransaction.godown_id == godown_id)
+        if start_date:
+            query = query.where(DBStockTransaction.transaction_date >= start_date)
+        if end_date:
+            query = query.where(DBStockTransaction.transaction_date <= end_date)
+        query = query.order_by(DBStockTransaction.transaction_date, DBStockTransaction.created_at)
+
+        result = await db.execute(query)
+        transactions = result.scalars().all()
+        item_res = await db.execute(select(DBItem).where(DBItem.id == item_id))
+        item = item_res.scalar_one_or_none()
+
+        opening_qty = 0
+        opening_value = 0
+        if start_date:
+            opening_query = select(DBStockTransaction).where(
+                DBStockTransaction.item_id == item_id,
+                DBStockTransaction.transaction_date < start_date,
+            )
+            if branch_id:
+                opening_query = opening_query.where(DBStockTransaction.branch_id == branch_id)
+            if godown_id:
+                opening_query = opening_query.where(DBStockTransaction.godown_id == godown_id)
+            opening_query = opening_query.order_by(desc(DBStockTransaction.transaction_date), desc(DBStockTransaction.created_at)).limit(1)
+            open_res = await db.execute(opening_query)
+            last_before = open_res.scalar_one_or_none()
+            opening_qty = last_before.running_qty if last_before else 0
+            opening_value = last_before.running_value if last_before else 0
+
+        ledger_entries = []
+        for trans in transactions:
+            qty = trans.quantity or 0
+            ledger_entries.append({
+                "date": trans.transaction_date,
+                "voucher_number": trans.reference_number,
+                "voucher_type": trans.reference_type,
+                "batch_number": trans.batch_number,
+                "in_qty": qty if qty > 0 else 0,
+                "out_qty": abs(qty) if qty < 0 else 0,
+                "rate": trans.unit_cost,
+                "value": abs(trans.total_cost or 0),
+                "balance_qty": trans.running_qty,
+                "balance_value": trans.running_value,
+            })
+
+        closing_qty = transactions[-1].running_qty if transactions else opening_qty
+        closing_value = transactions[-1].running_value if transactions else opening_value
+        avg_cost = closing_value / closing_qty if closing_qty and closing_qty > 0 else 0
+        return {
+            "item_id": item_id,
+            "item_name": item.name if item else "Unknown",
+            "item_code": item.code if item else "",
+            "branch_id": branch_id,
+            "godown_id": godown_id,
+            "period_start": start_date,
+            "period_end": end_date,
+            "opening_qty": opening_qty,
+            "opening_value": round(opening_value, 2),
+            "transactions": ledger_entries,
+            "closing_qty": closing_qty,
+            "closing_value": round(closing_value, 2),
+            "average_cost": round(avg_cost, 2),
+        }
     
     # Build query
     query = {"item_id": item_id}
@@ -591,11 +930,65 @@ async def get_stock_ledger(
 
 
 async def process_stock_adjustment(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     adjustment_data: Dict[str, Any],
     created_by: str
 ) -> Dict[str, Any]:
     """Process stock adjustment with accounting impact"""
+    if _is_sql_session(db):
+        result = await db.execute(select(DBStockAdjustment).order_by(desc(DBStockAdjustment.created_at)).limit(1))
+        last_adj = result.scalar_one_or_none()
+        if last_adj:
+            try:
+                new_num = int(last_adj.adjustment_number.split("/")[-1]) + 1
+            except (ValueError, IndexError, AttributeError):
+                new_num = 1
+        else:
+            new_num = 1
+
+        adjustment_number = f"ADJ/2025-26/{new_num:05d}"
+        total_shortage = 0.0
+        total_excess = 0.0
+        for item in adjustment_data["items"]:
+            diff = item["difference"]
+            unit_cost = item.get("unit_cost", item.get("rate", 0))
+            value_diff = item.get("value_difference", item.get("value", abs(diff) * unit_cost))
+            if diff < 0:
+                total_shortage += abs(value_diff)
+                await consume_stock_fifo(
+                    db, item["item_id"], adjustment_data["branch_id"], adjustment_data["godown_id"],
+                    abs(diff), "adjustment", adjustment_number, adjustment_number,
+                    adjustment_data["adjustment_date"],
+                )
+            elif diff > 0:
+                total_excess += value_diff
+                batch_number = await get_next_batch_number(db, item["item_id"], adjustment_data["branch_id"])
+                await create_stock_batch(
+                    db, item["item_id"], adjustment_data["branch_id"], adjustment_data["godown_id"],
+                    batch_number, diff, unit_cost, adjustment_data["adjustment_date"],
+                    None, None, None, "adjustment", adjustment_number, adjustment_number,
+                )
+
+        adjustment_doc = {
+            "id": str(uuid.uuid4()),
+            "adjustment_number": adjustment_number,
+            "branch_id": adjustment_data["branch_id"],
+            "godown_id": adjustment_data["godown_id"],
+            "adjustment_date": adjustment_data["adjustment_date"],
+            "reason": adjustment_data["reason"],
+            "items": adjustment_data["items"],
+            "narration": adjustment_data.get("narration") or adjustment_data.get("remarks"),
+            "total_shortage": total_shortage,
+            "total_excess": total_excess,
+            "net_value": total_excess - total_shortage,
+            "status": "completed",
+            "created_by": created_by,
+            "created_at": datetime.now(timezone.utc),
+        }
+        db.add(DBStockAdjustment(**adjustment_doc))
+        await db.commit()
+        adjustment_doc["created_at"] = adjustment_doc["created_at"].isoformat()
+        return adjustment_doc
     
     # Generate adjustment number
     last_adj = await db.stock_adjustments.find_one(sort=[("created_at", -1)])
@@ -615,12 +1008,8 @@ async def process_stock_adjustment(
     
     for item in adjustment_data["items"]:
         diff = item["difference"]
-<<<<<<< HEAD
         unit_cost = item.get("unit_cost", item.get("rate", 0))
         value_diff = item.get("value_difference", item.get("value", abs(diff) * unit_cost))
-=======
-        value_diff = item["value_difference"]
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
         
         if diff < 0:  # Shortage
             total_shortage += abs(value_diff)
@@ -640,11 +1029,7 @@ async def process_stock_adjustment(
             await create_stock_batch(
                 db, item["item_id"], adjustment_data["branch_id"],
                 adjustment_data["godown_id"], batch_number, diff,
-<<<<<<< HEAD
                 unit_cost, adjustment_data["adjustment_date"],
-=======
-                item["unit_cost"], adjustment_data["adjustment_date"],
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                 None, None, None, "adjustment", adjustment_number, adjustment_number
             )
     
@@ -657,11 +1042,7 @@ async def process_stock_adjustment(
         "adjustment_date": adjustment_data["adjustment_date"],
         "reason": adjustment_data["reason"],
         "items": adjustment_data["items"],
-<<<<<<< HEAD
         "narration": adjustment_data.get("narration") or adjustment_data.get("remarks"),
-=======
-        "narration": adjustment_data.get("narration"),
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
         "total_shortage": total_shortage,
         "total_excess": total_excess,
         "net_value": total_excess - total_shortage,
@@ -676,11 +1057,69 @@ async def process_stock_adjustment(
 
 
 async def process_inter_branch_transfer(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     transfer_data: Dict[str, Any],
     created_by: str
 ) -> Dict[str, Any]:
     """Process inter-branch stock transfer"""
+    if _is_sql_session(db):
+        result = await db.execute(select(DBInterBranchTransfer).order_by(desc(DBInterBranchTransfer.created_at)).limit(1))
+        last_transfer = result.scalar_one_or_none()
+        if last_transfer:
+            try:
+                new_num = int(last_transfer.transfer_number.split("/")[-1]) + 1
+            except (ValueError, IndexError, AttributeError):
+                new_num = 1
+        else:
+            new_num = 1
+
+        transfer_number = f"IBT/2025-26/{new_num:05d}"
+        total_quantity = 0.0
+        total_value = 0.0
+        processed_items = []
+
+        for item in transfer_data["items"]:
+            consume_result = await consume_stock_fifo(
+                db, item["item_id"], transfer_data["from_branch_id"],
+                transfer_data["from_godown_id"], item["quantity"],
+                "transfer", transfer_number, transfer_number,
+                transfer_data["transfer_date"],
+            )
+            if not consume_result["success"]:
+                return {"success": False, "error": consume_result["error"]}
+
+            batch_number = await get_next_batch_number(db, item["item_id"], transfer_data["to_branch_id"])
+            await create_stock_batch(
+                db, item["item_id"], transfer_data["to_branch_id"], transfer_data["to_godown_id"],
+                batch_number, item["quantity"], consume_result["average_cost"],
+                transfer_data["transfer_date"], None, None, None,
+                "transfer", transfer_number, transfer_number,
+            )
+
+            total_quantity += item["quantity"]
+            total_value += consume_result["total_cost"]
+            processed_items.append({**item, "unit_cost": consume_result["average_cost"], "total_cost": consume_result["total_cost"]})
+
+        transfer_doc = {
+            "id": str(uuid.uuid4()),
+            "transfer_number": transfer_number,
+            "from_branch_id": transfer_data["from_branch_id"],
+            "to_branch_id": transfer_data["to_branch_id"],
+            "from_godown_id": transfer_data["from_godown_id"],
+            "to_godown_id": transfer_data["to_godown_id"],
+            "transfer_date": transfer_data["transfer_date"],
+            "items": processed_items,
+            "narration": transfer_data.get("narration"),
+            "total_quantity": total_quantity,
+            "total_value": total_value,
+            "status": "completed",
+            "created_by": created_by,
+            "created_at": datetime.now(timezone.utc),
+        }
+        db.add(DBInterBranchTransfer(**transfer_doc))
+        await db.commit()
+        transfer_doc["created_at"] = transfer_doc["created_at"].isoformat()
+        return {"success": True, "transfer": transfer_doc}
     
     # Generate transfer number
     last_transfer = await db.inter_branch_transfers.find_one(sort=[("created_at", -1)])
@@ -755,13 +1194,17 @@ async def process_inter_branch_transfer(
 
 
 async def get_item_profitability(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     item_id: Optional[str] = None,
     branch_id: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Calculate item-wise profitability"""
+    if _is_sql_session(db):
+        # Sales are still kept by legacy routes, so ORM-only profitability has no
+        # sales source yet. Return an empty set for now.
+        return []
     
     # Build sales query
     sales_query = {"status": "completed"}

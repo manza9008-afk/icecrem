@@ -4,14 +4,27 @@ from models_accounting import *
 from utils import get_current_user
 from datetime import datetime, timezone
 import uuid
+import json
 
 router = APIRouter(prefix="/api/accounting", tags=["vouchers"])
 
-from server import db
+from database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import desc
+from db_models import Voucher as DBVoucher, Ledger as DBLedger, LedgerTransaction as DBLedgerTransaction, Branch as DBBranch, AccountGroup as DBAccountGroup
+
+def to_dict(obj):
+    if not obj: return {}
+    d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+    if 'entries' in d and isinstance(d['entries'], str):
+        try: d['entries'] = json.loads(d['entries'])
+        except: pass
+    return d
 
 # ==================== VOUCHER ENTRY ====================
 
-async def get_next_voucher_number(voucher_type: str, branch_id: str = None) -> str:
+async def get_next_voucher_number(session: AsyncSession, voucher_type: str, branch_id: str = None) -> str:
     """Generate next voucher number for given type"""
     prefix_map = {
         "journal": "JV",
@@ -26,23 +39,23 @@ async def get_next_voucher_number(voucher_type: str, branch_id: str = None) -> s
     branch_code = ""
     
     if branch_id:
-        branch = await db.branches.find_one({"id": branch_id})
+        res = await session.execute(select(DBBranch).where(DBBranch.id == branch_id))
+        branch = res.scalar_one_or_none()
         if branch:
-            branch_code = f"{branch['code']}/"
+            branch_code = f"{branch.code}/"
     
     # Get last voucher number
-    query = {"voucher_type": voucher_type}
+    query = select(DBVoucher).where(DBVoucher.voucher_type == voucher_type)
     if branch_id:
-        query["branch_id"] = branch_id
+        query = query.where(DBVoucher.branch_id == branch_id)
     
-    last_voucher = await db.vouchers.find_one(
-        query,
-        sort=[("created_at", -1)]
-    )
+    query = query.order_by(desc(DBVoucher.created_at)).limit(1)
+    res = await session.execute(query)
+    last_voucher = res.scalar_one_or_none()
     
-    if last_voucher and "voucher_number" in last_voucher:
+    if last_voucher and last_voucher.voucher_number:
         # Extract number from last voucher
-        parts = last_voucher["voucher_number"].split("/")
+        parts = last_voucher.voucher_number.split("/")
         last_num = int(parts[-1])
         new_num = last_num + 1
     else:
@@ -50,10 +63,11 @@ async def get_next_voucher_number(voucher_type: str, branch_id: str = None) -> s
     
     return f"{prefix}/{branch_code}2025-26/{new_num:05d}"
 
-async def post_to_ledger(db, voucher_id: str, voucher_number: str, voucher_date: str, entries: List[VoucherEntryItem]):
+async def post_to_ledger(session: AsyncSession, voucher_id: str, voucher_number: str, voucher_date: str, entries: List[VoucherEntryItem]):
     """Post voucher entries to ledgers"""
     for entry in entries:
-        ledger = await db.ledgers.find_one({"id": entry.ledger_id})
+        res = await session.execute(select(DBLedger).where(DBLedger.id == entry.ledger_id))
+        ledger = res.scalar_one_or_none()
         if not ledger:
             continue
         
@@ -65,54 +79,49 @@ async def post_to_ledger(db, voucher_id: str, voucher_number: str, voucher_date:
             balance_change = -amount
         
         # Update ledger balance
-        new_balance = ledger["current_balance"] + balance_change
-        await db.ledgers.update_one(
-            {"id": entry.ledger_id},
-            {"$set": {"current_balance": new_balance}}
-        )
+        new_balance = ledger.current_balance + balance_change
+        ledger.current_balance = new_balance
         
         # Create ledger transaction entry
-        ledger_transaction = {
-            "id": str(uuid.uuid4()),
-            "ledger_id": entry.ledger_id,
-            "voucher_id": voucher_id,
-            "voucher_number": voucher_number,
-            "voucher_date": voucher_date,
-            "entry_type": entry.entry_type,
-            "amount": amount,
-            "balance": new_balance,
-            "narration": entry.narration,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.ledger_transactions.insert_one(ledger_transaction)
+        ledger_transaction = DBLedgerTransaction(
+            id=str(uuid.uuid4()),
+            ledger_id=entry.ledger_id,
+            voucher_id=voucher_id,
+            voucher_number=voucher_number,
+            voucher_date=voucher_date,
+            entry_type=entry.entry_type,
+            amount=amount,
+            balance=new_balance,
+            narration=entry.narration,
+            created_at=datetime.now(timezone.utc)
+        )
+        session.add(ledger_transaction)
 
-async def reverse_ledger_posting(db, voucher_id: str):
+async def reverse_ledger_posting(session: AsyncSession, voucher_id: str):
     """Reverse ledger entries for a voucher"""
-    # Find all ledger transactions for this voucher
-    transactions = await db.ledger_transactions.find({"voucher_id": voucher_id}).to_list(100)
+    res = await session.execute(select(DBLedgerTransaction).where(DBLedgerTransaction.voucher_id == voucher_id))
+    transactions = res.scalars().all()
     
     for trans in transactions:
-        ledger = await db.ledgers.find_one({"id": trans["ledger_id"]})
+        res_l = await session.execute(select(DBLedger).where(DBLedger.id == trans.ledger_id))
+        ledger = res_l.scalar_one_or_none()
         if not ledger:
             continue
         
         # Reverse the balance change
-        if trans["entry_type"] == "debit":
-            balance_change = -trans["amount"]
+        if trans.entry_type == "debit":
+            balance_change = -trans.amount
         else:
-            balance_change = trans["amount"]
+            balance_change = trans.amount
         
-        new_balance = ledger["current_balance"] + balance_change
-        await db.ledgers.update_one(
-            {"id": trans["ledger_id"]},
-            {"$set": {"current_balance": new_balance}}
-        )
+        ledger.current_balance = ledger.current_balance + balance_change
     
     # Delete ledger transaction entries
-    await db.ledger_transactions.delete_many({"voucher_id": voucher_id})
+    for trans in transactions:
+        await session.delete(trans)
 
 @router.post("/vouchers", response_model=Voucher)
-async def create_voucher(voucher: VoucherCreate, current_user: dict = Depends(get_current_user)):
+async def create_voucher(voucher: VoucherCreate, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     """Create a new voucher with double-entry validation"""
     
     # Validate entries
@@ -131,28 +140,37 @@ async def create_voucher(voucher: VoucherCreate, current_user: dict = Depends(ge
     
     # Validate all ledgers exist
     for entry in voucher.entries:
-        ledger = await db.ledgers.find_one({"id": entry.ledger_id})
+        res = await session.execute(select(DBLedger).where(DBLedger.id == entry.ledger_id))
+        ledger = res.scalar_one_or_none()
         if not ledger:
             raise HTTPException(status_code=404, detail=f"Ledger {entry.ledger_name} not found")
     
     # Generate voucher number
-    voucher_number = await get_next_voucher_number(voucher.voucher_type, voucher.branch_id)
+    voucher_number = await get_next_voucher_number(session, voucher.voucher_type, voucher.branch_id)
     
     # Create voucher
-    voucher_obj = Voucher(
-        **voucher.model_dump(),
+    new_voucher = DBVoucher(
+        id=str(uuid.uuid4()),
         voucher_number=voucher_number,
-        total_amount=debit_total,
-        created_by=current_user["username"]
+        voucher_type=voucher.voucher_type,
+        voucher_date=voucher.voucher_date,
+        branch_id=voucher.branch_id,
+        narration=voucher.narration,
+        reference_number=voucher.reference_number,
+        total_debit=debit_total,
+        total_credit=credit_total,
+        status="approved",
+        entries=json.dumps([e.model_dump() for e in voucher.entries]),
+        created_by=current_user["username"],
+        created_at=datetime.now(timezone.utc)
     )
-    
-    doc = voucher_obj.model_dump()
-    await db.vouchers.insert_one(doc)
+    session.add(new_voucher)
     
     # Post to ledgers
-    await post_to_ledger(db, voucher_obj.id, voucher_number, voucher.voucher_date, voucher.entries)
+    await post_to_ledger(session, new_voucher.id, voucher_number, voucher.voucher_date, voucher.entries)
+    await session.commit()
     
-    return voucher_obj
+    return to_dict(new_voucher)
 
 @router.get("/vouchers", response_model=List[Voucher])
 async def get_vouchers(
@@ -160,35 +178,36 @@ async def get_vouchers(
     branch_id: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
-    query = {}
+    query = select(DBVoucher)
     if voucher_type:
-        query["voucher_type"] = voucher_type
+        query = query.where(DBVoucher.voucher_type == voucher_type)
     if branch_id:
-        query["branch_id"] = branch_id
+        query = query.where(DBVoucher.branch_id == branch_id)
     if start_date:
-        query["voucher_date"] = {"$gte": start_date}
+        query = query.where(DBVoucher.voucher_date >= start_date)
     if end_date:
-        if "voucher_date" in query:
-            query["voucher_date"]["$lte"] = end_date
-        else:
-            query["voucher_date"] = {"$lte": end_date}
+        query = query.where(DBVoucher.voucher_date <= end_date)
     
-    vouchers = await db.vouchers.find(query, {"_id": 0}).sort("voucher_date", -1).to_list(1000)
-    return vouchers
+    query = query.order_by(desc(DBVoucher.voucher_date))
+    res = await session.execute(query)
+    return [to_dict(v) for v in res.scalars().all()]
 
 @router.get("/vouchers/{voucher_id}", response_model=Voucher)
-async def get_voucher(voucher_id: str, current_user: dict = Depends(get_current_user)):
-    voucher = await db.vouchers.find_one({"id": voucher_id}, {"_id": 0})
+async def get_voucher(voucher_id: str, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    res = await session.execute(select(DBVoucher).where(DBVoucher.id == voucher_id))
+    voucher = res.scalar_one_or_none()
     if not voucher:
         raise HTTPException(status_code=404, detail="Voucher not found")
-    return voucher
+    return to_dict(voucher)
 
 @router.put("/vouchers/{voucher_id}", response_model=Voucher)
-async def update_voucher(voucher_id: str, voucher: VoucherCreate, current_user: dict = Depends(get_current_user)):
+async def update_voucher(voucher_id: str, voucher: VoucherCreate, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     """Update voucher with reverse and re-post"""
-    existing = await db.vouchers.find_one({"id": voucher_id})
+    res = await session.execute(select(DBVoucher).where(DBVoucher.id == voucher_id))
+    existing = res.scalar_one_or_none()
     if not existing:
         raise HTTPException(status_code=404, detail="Voucher not found")
     
@@ -200,33 +219,38 @@ async def update_voucher(voucher_id: str, voucher: VoucherCreate, current_user: 
         raise HTTPException(status_code=400, detail="Voucher not balanced")
     
     # Reverse old posting
-    await reverse_ledger_posting(db, voucher_id)
+    await reverse_ledger_posting(session, voucher_id)
     
     # Update voucher
-    update_data = voucher.model_dump()
-    update_data["total_amount"] = debit_total
-    update_data["modified_at"] = datetime.now(timezone.utc).isoformat()
-    
-    await db.vouchers.update_one({"id": voucher_id}, {"$set": update_data})
+    existing.voucher_type = voucher.voucher_type
+    existing.voucher_date = voucher.voucher_date
+    existing.narration = voucher.narration
+    existing.reference_number = voucher.reference_number
+    existing.entries = json.dumps([e.model_dump() for e in voucher.entries])
+    existing.total_debit = debit_total
+    existing.total_credit = credit_total
+    existing.modified_at = datetime.now(timezone.utc).isoformat()
     
     # Re-post to ledgers
-    await post_to_ledger(db, voucher_id, existing["voucher_number"], voucher.voucher_date, voucher.entries)
+    await post_to_ledger(session, voucher_id, existing.voucher_number, voucher.voucher_date, voucher.entries)
+    await session.commit()
     
-    updated = await db.vouchers.find_one({"id": voucher_id}, {"_id": 0})
-    return updated
+    return to_dict(existing)
 
 @router.delete("/vouchers/{voucher_id}")
-async def delete_voucher(voucher_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_voucher(voucher_id: str, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     """Delete voucher with complete reversal"""
-    existing = await db.vouchers.find_one({"id": voucher_id})
+    res = await session.execute(select(DBVoucher).where(DBVoucher.id == voucher_id))
+    existing = res.scalar_one_or_none()
     if not existing:
         raise HTTPException(status_code=404, detail="Voucher not found")
     
     # Reverse ledger posting
-    await reverse_ledger_posting(db, voucher_id)
+    await reverse_ledger_posting(session, voucher_id)
     
     # Delete voucher
-    await db.vouchers.delete_one({"id": voucher_id})
+    await session.delete(existing)
+    await session.commit()
     
     return {"message": "Voucher deleted and ledgers reversed"}
 
@@ -237,31 +261,30 @@ async def get_ledger_statement(
     ledger_id: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
     """Get ledger statement with running balance"""
-    ledger = await db.ledgers.find_one({"id": ledger_id}, {"_id": 0})
+    res = await session.execute(select(DBLedger).where(DBLedger.id == ledger_id))
+    ledger = res.scalar_one_or_none()
     if not ledger:
         raise HTTPException(status_code=404, detail="Ledger not found")
     
-    query = {"ledger_id": ledger_id}
+    query = select(DBLedgerTransaction).where(DBLedgerTransaction.ledger_id == ledger_id)
     if start_date:
-        query["voucher_date"] = {"$gte": start_date}
+        query = query.where(DBLedgerTransaction.voucher_date >= start_date)
     if end_date:
-        if "voucher_date" in query:
-            query["voucher_date"]["$lte"] = end_date
-        else:
-            query["voucher_date"] = {"$lte": end_date}
+        query = query.where(DBLedgerTransaction.voucher_date <= end_date)
     
-    transactions = await db.ledger_transactions.find(
-        query, {"_id": 0}
-    ).sort("voucher_date", 1).to_list(10000)
+    query = query.order_by(DBLedgerTransaction.voucher_date)
+    res_trans = await session.execute(query)
+    transactions = res_trans.scalars().all()
     
     return {
-        "ledger": ledger,
-        "opening_balance": ledger["opening_balance"],
-        "transactions": transactions,
-        "closing_balance": ledger["current_balance"]
+        "ledger": to_dict(ledger),
+        "opening_balance": ledger.opening_balance,
+        "transactions": [to_dict(t) for t in transactions],
+        "closing_balance": ledger.current_balance
     }
 
 @router.get("/reports/day-book")
@@ -270,18 +293,19 @@ async def get_day_book(
     end_date: str,
     branch_id: Optional[str] = None,
     voucher_type: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
     """Get day book (all vouchers with details)"""
-    query = {
-        "voucher_date": {"$gte": start_date, "$lte": end_date}
-    }
+    query = select(DBVoucher).where(DBVoucher.voucher_date >= start_date).where(DBVoucher.voucher_date <= end_date)
     if branch_id:
-        query["branch_id"] = branch_id
+        query = query.where(DBVoucher.branch_id == branch_id)
     if voucher_type:
-        query["voucher_type"] = voucher_type
+        query = query.where(DBVoucher.voucher_type == voucher_type)
     
-    vouchers = await db.vouchers.find(query, {"_id": 0}).sort("voucher_date", 1).to_list(10000)
+    query = query.order_by(DBVoucher.voucher_date)
+    res = await session.execute(query)
+    vouchers = [to_dict(v) for v in res.scalars().all()]
     
     return {
         "start_date": start_date,
@@ -294,17 +318,20 @@ async def get_day_book(
 async def get_trial_balance(
     end_date: Optional[str] = None,
     branch_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
     """Get trial balance (must always balance)"""
-    query = {"is_active": True}
+    query = select(DBLedger).where(DBLedger.is_active == True)
     if branch_id:
-        query["branch_id"] = branch_id
+        query = query.where(DBLedger.branch_id == branch_id)
     
-    ledgers = await db.ledgers.find(query, {"_id": 0}).to_list(10000)
+    res = await session.execute(query)
+    ledgers = [to_dict(l) for l in res.scalars().all()]
     
     # Get account groups for grouping
-    groups = await db.account_groups.find({}, {"_id": 0}).to_list(1000)
+    res_groups = await session.execute(select(DBAccountGroup))
+    groups = [to_dict(g) for g in res_groups.scalars().all()]
     groups_dict = {g["id"]: g for g in groups}
     
     trial_balance_data = []
@@ -351,21 +378,23 @@ async def get_profit_loss(
     start_date: str,
     end_date: str,
     branch_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
     """Generate Profit & Loss Statement"""
     # Get all income and expense ledgers
-    income_groups = await db.account_groups.find({"account_type": "Income"}, {"_id": 0}).to_list(100)
-    expense_groups = await db.account_groups.find({"account_type": "Expense"}, {"_id": 0}).to_list(100)
+    res_inc = await session.execute(select(DBAccountGroup).where(DBAccountGroup.account_type == "Income"))
+    res_exp = await session.execute(select(DBAccountGroup).where(DBAccountGroup.account_type == "Expense"))
     
-    income_group_ids = [g["id"] for g in income_groups]
-    expense_group_ids = [g["id"] for g in expense_groups]
+    income_group_ids = [g.id for g in res_inc.scalars().all()]
+    expense_group_ids = [g.id for g in res_exp.scalars().all()]
     
-    query = {"is_active": True}
+    query = select(DBLedger).where(DBLedger.is_active == True)
     if branch_id:
-        query["branch_id"] = branch_id
+        query = query.where(DBLedger.branch_id == branch_id)
     
-    all_ledgers = await db.ledgers.find(query, {"_id": 0}).to_list(10000)
+    res_all = await session.execute(query)
+    all_ledgers = [to_dict(l) for l in res_all.scalars().all()]
     
     income_ledgers = [l for l in all_ledgers if l["account_group_id"] in income_group_ids]
     expense_ledgers = [l for l in all_ledgers if l["account_group_id"] in expense_group_ids]
@@ -394,27 +423,28 @@ async def get_profit_loss(
 async def get_balance_sheet(
     end_date: str,
     branch_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
     """Generate Balance Sheet"""
     # Get P&L for net profit
-    pl = await get_profit_loss("2025-04-01", end_date, branch_id, current_user)
+    pl = await get_profit_loss("2025-04-01", end_date, branch_id, current_user, session)
     net_profit = pl["net_profit"]
     
     # Get all asset, liability, capital ledgers
-    asset_groups = await db.account_groups.find({"account_type": "Asset"}, {"_id": 0}).to_list(100)
-    liability_groups = await db.account_groups.find({"account_type": "Liability"}, {"_id": 0}).to_list(100)
-    capital_groups = await db.account_groups.find({"account_type": "Capital"}, {"_id": 0}).to_list(100)
+    res_groups = await session.execute(select(DBAccountGroup))
+    groups = res_groups.scalars().all()
     
-    asset_group_ids = [g["id"] for g in asset_groups]
-    liability_group_ids = [g["id"] for g in liability_groups]
-    capital_group_ids = [g["id"] for g in capital_groups]
+    asset_group_ids = [g.id for g in groups if g.account_type == "Asset"]
+    liability_group_ids = [g.id for g in groups if g.account_type == "Liability"]
+    capital_group_ids = [g.id for g in groups if g.account_type == "Capital"]
     
-    query = {"is_active": True}
+    query = select(DBLedger).where(DBLedger.is_active == True)
     if branch_id:
-        query["branch_id"] = branch_id
+        query = query.where(DBLedger.branch_id == branch_id)
     
-    all_ledgers = await db.ledgers.find(query, {"_id": 0}).to_list(10000)
+    res_all = await session.execute(query)
+    all_ledgers = [to_dict(l) for l in res_all.scalars().all()]
     
     asset_ledgers = [l for l in all_ledgers if l["account_group_id"] in asset_group_ids]
     liability_ledgers = [l for l in all_ledgers if l["account_group_id"] in liability_group_ids]

@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import { Plus, Edit2, Search, AlertTriangle } from 'lucide-react';
 import api from '../../services/api';
 
+const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+
 const emptyItemForm = {
   code: '', name: '', print_name: '', category: 'General', hsn_code: '', unit: 'NOS',
-  alternate_unit: '', conversion_factor: 1, gst_rate: 0, cess_rate: 0,
+  alternate_unit: '', conversion_factor: 1, gst_rate: 18, cess_rate: 0,
   cost_price: 0, selling_price: 0, mrp: 0, min_stock: 0, max_stock: 0, reorder_level: 0,
   is_batch_wise: true, is_expiry_tracking: true, description: ''
 };
 
 const getAlertQty = (item) => Number(item?.min_stock || item?.reorder_level || 0);
-=======
-import { Plus, Edit2, Search } from 'lucide-react';
-import api, { formatCurrency } from '../../services/api';
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 
 const ItemMaster = () => {
   const [items, setItems] = useState([]);
@@ -22,16 +19,7 @@ const ItemMaster = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-<<<<<<< HEAD
   const [formData, setFormData] = useState(emptyItemForm);
-=======
-  const [formData, setFormData] = useState({
-    code: '', name: '', print_name: '', category: 'General', hsn_code: '', unit: 'NOS',
-    alternate_unit: '', conversion_factor: 1, gst_rate: 18, cess_rate: 0,
-    cost_price: 0, selling_price: 0, mrp: 0, min_stock: 0, max_stock: 0, reorder_level: 0,
-    is_batch_wise: true, is_expiry_tracking: true, description: ''
-  });
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 
   useEffect(() => { fetchItems(); }, []);
 
@@ -49,7 +37,6 @@ const ItemMaster = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-<<<<<<< HEAD
       const lowStockQty = Number(formData.min_stock || 0);
       const payload = {
         ...formData,
@@ -68,17 +55,10 @@ const ItemMaster = () => {
         await api.put(`/inventory/items/${editingItem.id}`, payload);
       } else {
         await api.post('/inventory/items', payload);
-=======
-      if (editingItem) {
-        await api.put(`/inventory/items/${editingItem.id}`, formData);
-      } else {
-        await api.post('/inventory/items', formData);
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
       }
       fetchItems();
       closeModal();
     } catch (error) {
-<<<<<<< HEAD
       const errorMessage =
         error.response?.data?.detail ||
         error.response?.data?.message ||
@@ -87,35 +67,19 @@ const ItemMaster = () => {
           : error.message) ||
         'Error saving item';
       alert(errorMessage);
-=======
-      alert(error.response?.data?.detail || 'Error saving item');
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     }
   };
 
   const handleEdit = (item) => {
     setEditingItem(item);
-<<<<<<< HEAD
     setFormData({...emptyItemForm, ...item, min_stock: getAlertQty(item), reorder_level: getAlertQty(item)});
-=======
-    setFormData({...item});
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
     setEditingItem(null);
-<<<<<<< HEAD
     setFormData(emptyItemForm);
-=======
-    setFormData({
-      code: '', name: '', print_name: '', category: 'General', hsn_code: '', unit: 'NOS',
-      alternate_unit: '', conversion_factor: 1, gst_rate: 18, cess_rate: 0,
-      cost_price: 0, selling_price: 0, mrp: 0, min_stock: 0, max_stock: 0, reorder_level: 0,
-      is_batch_wise: true, is_expiry_tracking: true, description: ''
-    });
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
   };
 
   const filteredItems = items.filter(i => !searchTerm || i.name.toLowerCase().includes(searchTerm.toLowerCase()) || i.code.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -143,16 +107,12 @@ const ItemMaster = () => {
               <th>Code</th>
               <th>Name</th>
               <th>Category</th>
-<<<<<<< HEAD
-              <th>Unit</th>
-              <th className="text-right">Low Stock Alert</th>
-=======
               <th>HSN</th>
               <th>Unit</th>
               <th className="text-right">GST %</th>
               <th className="text-right">Cost Price</th>
               <th className="text-right">Selling Price</th>
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
+              <th className="text-right">Low Stock Alert</th>
               <th className="text-center">Actions</th>
             </tr>
           </thead>
@@ -162,16 +122,12 @@ const ItemMaster = () => {
                 <td><strong>{item.code}</strong></td>
                 <td>{item.name}</td>
                 <td>{item.category}</td>
-<<<<<<< HEAD
-                <td>{item.unit}</td>
-                <td className="numeric">{getAlertQty(item)}</td>
-=======
                 <td>{item.hsn_code}</td>
                 <td>{item.unit}</td>
                 <td className="numeric">{item.gst_rate}%</td>
                 <td className="numeric">{formatCurrency(item.cost_price)}</td>
                 <td className="numeric">{formatCurrency(item.selling_price)}</td>
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
+                <td className="numeric">{getAlertQty(item)}</td>
                 <td className="text-center"><button className="btn btn-sm btn-secondary" onClick={() => handleEdit(item)}><Edit2 size={14} /></button></td>
               </tr>
             ))}
@@ -194,10 +150,13 @@ const ItemMaster = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group"><label className="form-label">Category</label><input type="text" className="form-control" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} /></div>
-<<<<<<< HEAD
+                  <div className="form-group"><label className="form-label">HSN Code *</label><input type="text" className="form-control" value={formData.hsn_code} onChange={e => setFormData({...formData, hsn_code: e.target.value})} required /></div>
                 </div>
                 <div className="form-row">
                   <div className="form-group"><label className="form-label">Unit *</label><select className="form-control" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})}><option>NOS</option><option>KGS</option><option>LTR</option><option>BOX</option><option>PCS</option><option>DOZ</option></select></div>
+                  <div className="form-group"><label className="form-label">GST Rate %</label><select className="form-control" value={formData.gst_rate} onChange={e => setFormData({...formData, gst_rate: parseFloat(e.target.value)})}><option value={0}>0%</option><option value={5}>5%</option><option value={12}>12%</option><option value={18}>18%</option><option value={28}>28%</option></select></div>
+                </div>
+                <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Low Stock Alert Qty</label>
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
@@ -212,18 +171,8 @@ const ItemMaster = () => {
                       />
                     </div>
                   </div>
-=======
-                  <div className="form-group"><label className="form-label">HSN Code *</label><input type="text" className="form-control" value={formData.hsn_code} onChange={e => setFormData({...formData, hsn_code: e.target.value})} required /></div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group"><label className="form-label">Unit *</label><select className="form-control" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})}><option>NOS</option><option>KGS</option><option>LTR</option><option>BOX</option><option>PCS</option><option>DOZ</option></select></div>
-                  <div className="form-group"><label className="form-label">GST Rate %</label><select className="form-control" value={formData.gst_rate} onChange={e => setFormData({...formData, gst_rate: parseFloat(e.target.value)})}><option value={0}>0%</option><option value={5}>5%</option><option value={12}>12%</option><option value={18}>18%</option><option value={28}>28%</option></select></div>
-                </div>
-                <div className="form-row">
                   <div className="form-group"><label className="form-label">Cost Price</label><input type="number" step="0.01" className="form-control" value={formData.cost_price} onChange={e => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})} /></div>
                   <div className="form-group"><label className="form-label">Selling Price</label><input type="number" step="0.01" className="form-control" value={formData.selling_price} onChange={e => setFormData({...formData, selling_price: parseFloat(e.target.value) || 0})} /></div>
-                  <div className="form-group"><label className="form-label">MRP</label><input type="number" step="0.01" className="form-control" value={formData.mrp} onChange={e => setFormData({...formData, mrp: parseFloat(e.target.value) || 0})} /></div>
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
                 </div>
                 <div className="form-row">
                   <div className="form-group"><label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}><input type="checkbox" checked={formData.is_batch_wise} onChange={e => setFormData({...formData, is_batch_wise: e.target.checked})} /><span>Batch-wise Tracking</span></label></div>

@@ -4,8 +4,9 @@ GST calculations, GSTR-1, GSTR-3B report generation
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from motor.motor_asyncio import AsyncIOMotorDatabase
 import json
+
+DatabaseHandle = Any
 
 # Indian State Codes
 STATE_CODES = {
@@ -72,7 +73,7 @@ def determine_supply_type(seller_state_code: str, buyer_state_code: str) -> str:
 
 
 async def generate_gstr1_report(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     gstin: str,
     month: int,
     year: int,
@@ -246,7 +247,7 @@ async def generate_gstr1_report(
 
 
 async def generate_gstr3b_report(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     gstin: str,
     month: int,
     year: int,
@@ -342,7 +343,7 @@ async def generate_gstr3b_report(
 
 
 async def get_hsn_summary(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     month: int,
     year: int,
     branch_id: Optional[str] = None,
@@ -443,7 +444,7 @@ async def validate_gstin(gstin: str) -> Dict[str, Any]:
 
 
 async def calculate_input_tax_credit(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     branch_id: str,
     month: int,
     year: int

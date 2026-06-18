@@ -7,7 +7,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -19,13 +18,18 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 import io
 
+from sqlalchemy.future import select
+from sqlalchemy import func, desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from database import engine, SessionLocal, Base, get_db, init_db
+from db_models import User, CompanySettings, Branch, Godown, Customer, Supplier, HSNMaster
+from legacy_pg import PostgresDocumentStore
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Older document-style routes store their data in PostgreSQL as JSON rows.
+db = PostgresDocumentStore(SessionLocal)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -47,6 +51,10 @@ security = HTTPBearer()
 
 
 # ==================== UTILITIES ====================
+
+def to_dict(obj):
+    if not obj: return {}
+    return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -87,51 +95,52 @@ class PasswordChangeRequest(BaseModel):
 # ==================== AUTHENTICATION ====================
 
 @api_router.post("/auth/login", response_model=LoginResponse)
-async def login(credentials: LoginRequest):
-    user = await db.users.find_one({"username": credentials.username}, {"_id": 0})
+async def login(credentials: LoginRequest, session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(User).where(User.username == credentials.username))
+    user = result.scalar_one_or_none()
     
-    if not user or not pwd_context.verify(credentials.password, user["password_hash"]):
+    if not user or not pwd_context.verify(credentials.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    await db.users.update_one(
-        {"username": credentials.username},
-        {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}}
-    )
+    user.last_login = datetime.now(timezone.utc)
+    await session.commit()
     
-    access_token = create_access_token(data={"sub": user["username"]})
+    access_token = create_access_token(data={"sub": user.username})
     
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
         user={
-            "username": user["username"],
-            "email": user["email"],
-            "full_name": user["full_name"],
-            "require_password_change": user.get("require_password_change", False)
+            "username": user.username,
+            "email": user.email,
+            "full_name": user.full_name,
+            "require_password_change": user.require_password_change
         }
     )
 
 
 @api_router.post("/auth/change-password")
-async def change_password(request: PasswordChangeRequest, current_user: dict = Depends(get_current_user)):
-    user = await db.users.find_one({"username": current_user["username"]})
+async def change_password(request: PasswordChangeRequest, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(User).where(User.username == current_user["username"]))
+    user = result.scalar_one_or_none()
     
-    if not pwd_context.verify(request.old_password, user["password_hash"]):
+    if not pwd_context.verify(request.old_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid old password")
     
-    new_hash = pwd_context.hash(request.new_password)
-    await db.users.update_one(
-        {"username": current_user["username"]},
-        {"$set": {"password_hash": new_hash, "require_password_change": False}}
-    )
+    user.password_hash = pwd_context.hash(request.new_password)
+    user.require_password_change = False
+    await session.commit()
     
     return {"message": "Password changed successfully"}
 
 
 @api_router.get("/auth/me")
-async def get_current_user_info(current_user: dict = Depends(get_current_user)):
-    user = await db.users.find_one({"username": current_user["username"]}, {"_id": 0, "password_hash": 0})
-    return user
+async def get_current_user_info(current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(User).where(User.username == current_user["username"]))
+    user = result.scalar_one_or_none()
+    user_dict = to_dict(user)
+    user_dict.pop("password_hash", None)
+    return user_dict
 
 
 # ==================== DASHBOARD ====================
@@ -141,97 +150,14 @@ async def get_dashboard_stats(
     branch_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    month_start = today_start.replace(day=1)
-    
-    # Build query
-    sales_query = {"status": "completed"}
-    if branch_id:
-        sales_query["branch_id"] = branch_id
-    
-    # Today's sales
-    today_query = {**sales_query, "invoice_date": {"$gte": today_start.isoformat()[:10]}}
-    sales_today = await db.sales_invoices.aggregate([
-        {"$match": today_query},
-        {"$group": {"_id": None, "total": {"$sum": "$grand_total"}}}
-    ]).to_list(1)
-    
-    # Monthly sales
-    month_query = {**sales_query, "invoice_date": {"$gte": month_start.isoformat()[:10]}}
-    sales_month = await db.sales_invoices.aggregate([
-        {"$match": month_query},
-        {"$group": {"_id": None, "total": {"$sum": "$grand_total"}}}
-    ]).to_list(1)
-    
-<<<<<<< HEAD
-    # Low stock items based on each item's configured alert quantity.
-    stock_match = {"is_active": True}
-    if branch_id:
-        stock_match["branch_id"] = branch_id
-
-    stock_totals = await db.stock_batches.aggregate([
-        {"$match": stock_match},
-        {"$group": {
-            "_id": "$item_id",
-            "ready_qty": {"$sum": "$remaining_quantity"}
-        }}
-    ]).to_list(10000)
-
-    low_stock_count = 0
-    for stock_item in stock_totals:
-        item = await db.items.find_one({"id": stock_item["_id"]}, {"_id": 0})
-        if not item:
-            continue
-
-        threshold = 0
-        for field in ("min_stock", "reorder_level"):
-            try:
-                value = float(item.get(field) or 0)
-            except (TypeError, ValueError):
-                value = 0
-            if value > 0:
-                threshold = value
-                break
-
-        if threshold > 0 and float(stock_item.get("ready_qty") or 0) <= threshold:
-            low_stock_count += 1
-=======
-    # Low stock items
-    low_stock_count = await db.stock_batches.count_documents({
-        "remaining_quantity": {"$gt": 0, "$lt": 10},
-        "is_active": True
-    })
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
-    
-    # Outstanding receivables
-    ledger_query = {"is_party": True, "is_active": True}
-    if branch_id:
-        ledger_query["branch_id"] = branch_id
-    
-    debtors_group = await db.account_groups.find_one({"code": "A0103"})
-    if debtors_group:
-        ledger_query["account_group_id"] = debtors_group["id"]
-        ledgers = await db.ledgers.find(ledger_query, {"_id": 0}).to_list(10000)
-        outstanding = sum(l.get("current_balance", 0) for l in ledgers if l.get("current_balance", 0) > 0)
-    else:
-        outstanding = 0
-    
-    # Pending orders count
-    pending_orders = await db.sales_orders.count_documents({"status": {"$in": ["pending", "partial"]}})
-    
-    # Today's purchases
-    purchase_today = await db.purchase_invoices.aggregate([
-        {"$match": {"invoice_date": {"$gte": today_start.isoformat()[:10]}, "status": "completed"}},
-        {"$group": {"_id": None, "total": {"$sum": "$grand_total"}}}
-    ]).to_list(1)
-    
+    # NOTE: Pending migration of full ORM models to calculate actual dashboard stats
     return {
-        "today_sales": sales_today[0]["total"] if sales_today else 0,
-        "monthly_sales": sales_month[0]["total"] if sales_month else 0,
-        "today_purchases": purchase_today[0]["total"] if purchase_today else 0,
-        "low_stock_items": low_stock_count,
-        "outstanding_receivables": outstanding,
-        "pending_orders": pending_orders
+        "today_sales": 0,
+        "monthly_sales": 0,
+        "today_purchases": 0,
+        "low_stock_items": 0,
+        "outstanding_receivables": 0,
+        "pending_orders": 0
     }
 
 
@@ -240,52 +166,30 @@ async def get_recent_activity(
     limit: int = 10,
     current_user: dict = Depends(get_current_user)
 ):
-    activities = []
-    
-    # Recent sales
-    sales = await db.sales_invoices.find(
-        {"status": "completed"}, {"_id": 0}
-    ).sort("created_at", -1).limit(5).to_list(5)
-    
-    for sale in sales:
-        activities.append({
-            "type": "sales",
-            "description": f"Sales Invoice {sale['invoice_number']} - {sale['customer_name']}",
-            "amount": sale["grand_total"],
-            "date": sale["created_at"]
-        })
-    
-    # Recent purchases
-    purchases = await db.purchase_invoices.find(
-        {"status": "completed"}, {"_id": 0}
-    ).sort("created_at", -1).limit(5).to_list(5)
-    
-    for purchase in purchases:
-        activities.append({
-            "type": "purchase",
-            "description": f"Purchase Invoice {purchase['invoice_number']} - {purchase['supplier_name']}",
-            "amount": purchase["grand_total"],
-            "date": purchase["created_at"]
-        })
-    
-    # Sort by date
-    activities.sort(key=lambda x: x["date"], reverse=True)
-    
-    return activities[:limit]
+    # NOTE: Pending migration to PostgreSQL
+    return []
 
 
 # ==================== COMPANY SETTINGS ====================
 
 @api_router.get("/settings/company")
-async def get_company_settings(current_user: dict = Depends(get_current_user)):
-    settings = await db.company_settings.find_one({}, {"_id": 0})
-    return settings or {}
+async def get_company_settings(current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(CompanySettings))
+    settings = result.scalar_one_or_none()
+    return to_dict(settings) if settings else {}
 
 
 @api_router.put("/settings/company")
-async def update_company_settings(settings: dict, current_user: dict = Depends(get_current_user)):
-    settings["modified_at"] = datetime.now(timezone.utc).isoformat()
-    await db.company_settings.update_one({}, {"$set": settings}, upsert=True)
+async def update_company_settings(settings: dict, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    result = await session.execute(select(CompanySettings))
+    comp = result.scalar_one_or_none()
+    if comp:
+        for key, val in settings.items():
+            setattr(comp, key, val)
+    else:
+        comp = CompanySettings(**settings)
+        session.add(comp)
+    await session.commit()
     return {"message": "Settings updated successfully"}
 
 
@@ -294,41 +198,39 @@ async def update_company_settings(settings: dict, current_user: dict = Depends(g
 @api_router.get("/customers")
 async def get_customers(
     search: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
-    query = {"is_active": True}
+    query = select(Customer).where(Customer.is_active == True)
     if search:
-        query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
-            {"gstin": {"$regex": search, "$options": "i"}}
-        ]
-    
-    customers = await db.customers.find(query, {"_id": 0}).to_list(10000)
-    return customers
+        query = query.where((Customer.name.ilike(f"%{search}%")) | (Customer.gstin.ilike(f"%{search}%")))
+    result = await session.execute(query)
+    customers = result.scalars().all()
+    return [to_dict(c) for c in customers]
 
 
 @api_router.post("/customers")
-async def create_customer(customer_data: dict, current_user: dict = Depends(get_current_user)):
-    customer_doc = {
-        "id": str(uuid.uuid4()),
-        **customer_data,
-        "is_active": True,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.customers.insert_one(customer_doc)
-    customer_doc.pop("_id", None)
-    return customer_doc
+async def create_customer(customer_data: dict, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    new_customer = Customer(id=str(uuid.uuid4()), **customer_data, is_active=True, created_at=datetime.now(timezone.utc))
+    session.add(new_customer)
+    await session.commit()
+    return to_dict(new_customer)
 
 
 @api_router.put("/customers/{customer_id}")
 async def update_customer(
     customer_id: str,
     customer_data: dict,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
-    result = await db.customers.update_one({"id": customer_id}, {"$set": customer_data})
-    if result.matched_count == 0:
+    result = await session.execute(select(Customer).where(Customer.id == customer_id))
+    customer = result.scalar_one_or_none()
+    if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
+    for key, value in customer_data.items():
+        setattr(customer, key, value)
+    await session.commit()
     return {"message": "Customer updated"}
 
 
@@ -337,41 +239,39 @@ async def update_customer(
 @api_router.get("/suppliers")
 async def get_suppliers(
     search: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
-    query = {"is_active": True}
+    query = select(Supplier).where(Supplier.is_active == True)
     if search:
-        query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
-            {"gstin": {"$regex": search, "$options": "i"}}
-        ]
-    
-    suppliers = await db.suppliers.find(query, {"_id": 0}).to_list(10000)
-    return suppliers
+        query = query.where((Supplier.name.ilike(f"%{search}%")) | (Supplier.gstin.ilike(f"%{search}%")))
+    result = await session.execute(query)
+    suppliers = result.scalars().all()
+    return [to_dict(s) for s in suppliers]
 
 
 @api_router.post("/suppliers")
-async def create_supplier(supplier_data: dict, current_user: dict = Depends(get_current_user)):
-    supplier_doc = {
-        "id": str(uuid.uuid4()),
-        **supplier_data,
-        "is_active": True,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.suppliers.insert_one(supplier_doc)
-    supplier_doc.pop("_id", None)
-    return supplier_doc
+async def create_supplier(supplier_data: dict, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
+    new_supplier = Supplier(id=str(uuid.uuid4()), **supplier_data, is_active=True, created_at=datetime.now(timezone.utc))
+    session.add(new_supplier)
+    await session.commit()
+    return to_dict(new_supplier)
 
 
 @api_router.put("/suppliers/{supplier_id}")
 async def update_supplier(
     supplier_id: str,
     supplier_data: dict,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
-    result = await db.suppliers.update_one({"id": supplier_id}, {"$set": supplier_data})
-    if result.matched_count == 0:
+    result = await session.execute(select(Supplier).where(Supplier.id == supplier_id))
+    supplier = result.scalar_one_or_none()
+    if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
+    for key, value in supplier_data.items():
+        setattr(supplier, key, value)
+    await session.commit()
     return {"message": "Supplier updated"}
 
 
@@ -391,7 +291,8 @@ app.include_router(api_router)
 
 # Include module routers
 from routes.branch_routes import router as branch_router
-from routes.accounting_routes import router as accounting_router
+from routes_accounting import router as accounting_router
+from routes_vouchers import router as voucher_router
 from routes.inventory_routes import router as inventory_router
 from routes.sales_routes import router as sales_router
 from routes.purchase_routes import router as purchase_router
@@ -403,6 +304,7 @@ from routes.system_routes import router as system_router
 
 app.include_router(branch_router)
 app.include_router(accounting_router)
+app.include_router(voucher_router)
 app.include_router(inventory_router)
 app.include_router(sales_router)
 app.include_router(purchase_router)
@@ -411,8 +313,6 @@ app.include_router(security_router)
 app.include_router(advanced_reports_router)
 app.include_router(pdf_router)
 app.include_router(system_router)
-
-<<<<<<< HEAD
 
 def get_cors_origins() -> List[str]:
     raw_origins = [origin.strip() for origin in os.environ.get("CORS_ORIGINS", "*").split(",") if origin.strip()]
@@ -433,17 +333,11 @@ def get_cors_origins() -> List[str]:
     return sorted(origins)
 
 
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 # CORS
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-<<<<<<< HEAD
     allow_origins=get_cors_origins(),
-=======
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -458,145 +352,130 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db():
-    """Initialize database with required data"""
-    
-    # Create default admin user
-    admin = await db.users.find_one({"username": "hooren_admin"})
-    if not admin:
-        admin_user = {
-            "username": "hooren_admin",
-            "password_hash": pwd_context.hash("Hooren@2026#Secure"),
-            "email": "maanzaicecream@gmail.com",
-            "full_name": "Admin User",
-            "require_password_change": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.users.insert_one(admin_user)
-        logger.info("Created admin user")
-    
-    # Initialize company settings
-    settings = await db.company_settings.find_one({})
-    if not settings:
-        company_data = {
-            "business_name": "HOOREN FOOD PRODUCTS",
-            "trade_name": "HOOREN FOOD PRODUCT",
-            "gstin": "24AAHFH1702M1ZK",
-            "pan": "AAHFH1702M",
-            "address": "Survey No 409, R.S. No 409, At Ranuj, Post Ranuj, Taluka Patan",
-            "city": "Patan",
-            "state": "Gujarat",
-            "state_code": "24",
-            "pincode": "384275",
-            "phone": "9725368208",
-            "email": "maanzaicecream@gmail.com",
-            "bank_name": "Kotak Mahindra Bank",
-            "account_number": "0711473537",
-            "ifsc": "KKBK0000848",
-            "branch": "Siddhpur",
-            "financial_year": "2025-26"
-        }
-        await db.company_settings.insert_one(company_data)
-        logger.info("Created company settings")
-    
-    # Create default branch if none exists
-    branch_count = await db.branches.count_documents({})
-    if branch_count == 0:
-        default_branch = {
-            "id": str(uuid.uuid4()),
-            "code": "HO",
-            "name": "Head Office - Patan",
-            "address": "Survey No 409, R.S. No 409, At Ranuj, Post Ranuj, Taluka Patan",
-            "city": "Patan",
-            "state": "Gujarat",
-            "state_code": "24",
-            "pincode": "384275",
-            "gstin": "24AAHFH1702M1ZK",
-            "phone": "9725368208",
-            "email": "maanzaicecream@gmail.com",
-            "is_head_office": True,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.branches.insert_one(default_branch)
-        
-<<<<<<< HEAD
-        # Create default stock locations
-        store_godown = {
-            "id": str(uuid.uuid4()),
-            "code": "HO-STORE",
-            "name": "Store",
-=======
-        # Create default godown
-        default_godown = {
-            "id": str(uuid.uuid4()),
-            "code": "HO-MAIN",
-            "name": "Main Godown",
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
-            "branch_id": default_branch["id"],
-            "address": default_branch["address"],
-            "is_default": True,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-<<<<<<< HEAD
-        cold_room = {
-            "id": str(uuid.uuid4()),
-            "code": "HO-COLD",
-            "name": "Cold Room",
-            "branch_id": default_branch["id"],
-            "address": default_branch["address"],
-            "is_default": False,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.godowns.insert_many([store_godown, cold_room])
-=======
-        await db.godowns.insert_one(default_godown)
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
-        
-        # Seed Chart of Accounts
-        from services.accounting_service import seed_chart_of_accounts
-        await seed_chart_of_accounts(db, default_branch["id"])
-        
-        logger.info("Created default branch, godown, and chart of accounts")
-    
-    # Seed HSN codes
-    hsn_count = await db.hsn_master.count_documents({})
-    if hsn_count == 0:
-        from routes.gst_routes import seed_hsn_data
-        # We'll handle this manually since route depends on user
-        hsn_codes = [
-            {"hsn_code": "2105", "description": "Ice cream and other edible ice", "gst_rate": 18},
-            {"hsn_code": "0401", "description": "Milk and cream, not concentrated", "gst_rate": 0},
-            {"hsn_code": "0402", "description": "Milk and cream, concentrated", "gst_rate": 5},
-            {"hsn_code": "0405", "description": "Butter and fats from milk", "gst_rate": 12},
-            {"hsn_code": "1806", "description": "Chocolate preparations", "gst_rate": 18},
-            {"hsn_code": "2106", "description": "Food preparations NES", "gst_rate": 18},
-        ]
-        for hsn in hsn_codes:
-            hsn_doc = {
-                "id": str(uuid.uuid4()),
-                **hsn,
-                "cess_rate": 0,
-                "is_active": True,
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            await db.hsn_master.insert_one(hsn_doc)
-        logger.info("Seeded HSN codes")
-    
-    # Create indexes for performance
-    await db.vouchers.create_index([("voucher_date", -1)])
-    await db.vouchers.create_index([("voucher_type", 1), ("branch_id", 1)])
-    await db.ledger_transactions.create_index([("ledger_id", 1), ("voucher_date", 1)])
-    await db.sales_invoices.create_index([("invoice_date", -1)])
-    await db.sales_invoices.create_index([("branch_id", 1), ("invoice_type", 1)])
-    await db.purchase_invoices.create_index([("invoice_date", -1)])
-    await db.stock_batches.create_index([("item_id", 1), ("branch_id", 1), ("godown_id", 1)])
-    await db.stock_transactions.create_index([("item_id", 1), ("transaction_date", -1)])
-    
-    logger.info("Database indexes created")
+    """Initialize database with required data (migrated to PostgreSQL/SQLAlchemy)"""
+    await init_db()
+    async with SessionLocal() as session:
+        # ---- Create default admin user ----
+        result = await session.execute(select(User).where(User.username == "hooren_admin"))
+        admin = result.scalar_one_or_none()
+        if not admin:
+            admin_user = User(
+                id=str(uuid.uuid4()),
+                username="hooren_admin",
+                password_hash=pwd_context.hash("Hooren@2026#Secure"),
+                email="maanzaicecream@gmail.com",
+                full_name="Admin User",
+                require_password_change=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            session.add(admin_user)
+            await session.commit()
+            logger.info("Created admin user")
+
+        # ---- Initialize company settings ----
+        result = await session.execute(select(CompanySettings))
+        settings = result.scalar_one_or_none()
+        if not settings:
+            company = CompanySettings(
+                id=str(uuid.uuid4()),
+                business_name="HOOREN FOOD PRODUCTS",
+                trade_name="HOOREN FOOD PRODUCT",
+                gstin="24AAHFH1702M1ZK",
+                pan="AAHFH1702M",
+                address="Survey No 409, R.S. No 409, At Ranuj, Post Ranuj, Taluka Patan",
+                city="Patan",
+                state="Gujarat",
+                state_code="24",
+                pincode="384275",
+                phone="9725368208",
+                email="maanzaicecream@gmail.com",
+                bank_name="Kotak Mahindra Bank",
+                account_number="0711473537",
+                ifsc="KKBK0000848",
+                branch="Siddhpur",
+                financial_year="2025-26"
+            )
+            session.add(company)
+            await session.commit()
+            logger.info("Created company settings")
+
+        # ---- Create default branch + godowns if none exist ----
+        result = await session.execute(select(Branch))
+        existing_branch = result.scalars().first()
+        if not existing_branch:
+            default_branch = Branch(
+                id=str(uuid.uuid4()),
+                code="HO",
+                name="Head Office - Patan",
+                address="Survey No 409, R.S. No 409, At Ranuj, Post Ranuj, Taluka Patan",
+                city="Patan",
+                state="Gujarat",
+                state_code="24",
+                pincode="384275",
+                gstin="24AAHFH1702M1ZK",
+                phone="9725368208",
+                email="maanzaicecream@gmail.com",
+                is_head_office=True,
+                is_active=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            session.add(default_branch)
+            await session.flush()  # ensures default_branch.id is available below
+
+            # Default stock locations: Store + Cold Room (suited for an ice-cream/food business)
+            store_godown = Godown(
+                id=str(uuid.uuid4()),
+                code="HO-STORE",
+                name="Store",
+                branch_id=default_branch.id,
+                address=default_branch.address,
+                is_default=True,
+                is_active=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            cold_room = Godown(
+                id=str(uuid.uuid4()),
+                code="HO-COLD",
+                name="Cold Room",
+                branch_id=default_branch.id,
+                address=default_branch.address,
+                is_default=False,
+                is_active=True,
+                created_at=datetime.now(timezone.utc)
+            )
+            session.add_all([store_godown, cold_room])
+            await session.commit()
+
+            # Seed Chart of Accounts
+            from services.accounting_service import seed_chart_of_accounts
+            await seed_chart_of_accounts(session, default_branch.id)
+
+            logger.info("Created default branch, godowns (Store + Cold Room), and chart of accounts")
+
+        # ---- Seed HSN codes ----
+        result = await session.execute(select(HSNMaster))
+        existing_hsn = result.scalars().first()
+        if not existing_hsn:
+            hsn_codes = [
+                {"hsn_code": "2105", "description": "Ice cream and other edible ice", "gst_rate": 18},
+                {"hsn_code": "0401", "description": "Milk and cream, not concentrated", "gst_rate": 0},
+                {"hsn_code": "0402", "description": "Milk and cream, concentrated", "gst_rate": 5},
+                {"hsn_code": "0405", "description": "Butter and fats from milk", "gst_rate": 12},
+                {"hsn_code": "1806", "description": "Chocolate preparations", "gst_rate": 18},
+                {"hsn_code": "2106", "description": "Food preparations NES", "gst_rate": 18},
+            ]
+            for hsn in hsn_codes:
+                session.add(HSNMaster(
+                    id=str(uuid.uuid4()),
+                    **hsn,
+                    cess_rate=0,
+                    is_active=True,
+                    created_at=datetime.now(timezone.utc)
+                ))
+            await session.commit()
+            logger.info("Seeded HSN codes")
 
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    client.close()
+    await engine.dispose()

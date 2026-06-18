@@ -7,10 +7,12 @@ import uvicorn
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 BACKEND_DIR = ROOT_DIR / "backend"
-LOG_FILE = BACKEND_DIR / "backend.runtime.log"
+LOG_FILE = BACKEND_DIR / "backend.postgres.runtime.log"
 
-os.environ.setdefault("MONGO_URL", "mongodb://127.0.0.1:27017")
-os.environ.setdefault("DB_NAME", "test_database")
+os.environ.setdefault(
+    "DATABASE_URL",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/hooren_erp",
+)
 os.environ.setdefault(
     "CORS_ORIGINS",
     ",".join(

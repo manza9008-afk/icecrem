@@ -153,7 +153,6 @@ const buildDynamicExpressionWrapper = (child, t) =>
     false,
   );
 
-<<<<<<< HEAD
 // Some native HTML elements only allow very specific direct children.
 // Wrapping their dynamic JSX children in <span style={{display: "contents"}} />
 // still produces invalid DOM nesting warnings in React.
@@ -170,8 +169,6 @@ const STRICT_CHILD_HTML_TAGS = new Set([
   "colgroup",
 ]);
 
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 const wrapDynamicExpressionChildren = (jsxPath, t) => {
   const children = jsxPath.node.children || [];
   let didChange = false;
@@ -1738,12 +1735,9 @@ const babelMetadataPlugin = ({ types: t }) => {
           if (hasProp(openingElement, "data-ve-dynamic") || hasProp(openingElement, "x-excluded")) {
             return;
           }
-<<<<<<< HEAD
           if (STRICT_CHILD_HTML_TAGS.has(elementName)) {
             return;
           }
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
           wrapDynamicExpressionChildren(jsxPath, t);
           return;
         }

@@ -79,11 +79,8 @@ export const getFinancialYear = () => {
   }
   return `${year - 1}-${year.toString().slice(2)}`;
 };
-<<<<<<< HEAD
 
 export const getItemSizeLabel = (item) => {
   if (!item) return '';
   return item.print_name || item.alternate_unit || item.unit || '';
 };
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68

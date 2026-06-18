@@ -16,25 +16,19 @@ import GodownMaster from './pages/Masters/GodownMaster';
 import AccountGroups from './pages/Masters/AccountGroups';
 import LedgerMaster from './pages/Masters/LedgerMaster';
 import ItemMaster from './pages/Masters/ItemMaster';
-<<<<<<< HEAD
-=======
 import CustomerMaster from './pages/Masters/CustomerMaster';
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 import SupplierMaster from './pages/Masters/SupplierMaster';
 
 // Accounting
 import VoucherEntry from './pages/Accounting/VoucherEntry';
 import VoucherList from './pages/Accounting/VoucherList';
 
-<<<<<<< HEAD
-=======
 // Sales
 import Quotation from './pages/Sales/Quotation';
 import SalesOrder from './pages/Sales/SalesOrder';
 import SalesInvoice from './pages/Sales/SalesInvoice';
 import SalesHistory from './pages/Sales/SalesHistory';
 
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 // Purchase
 import PurchaseOrder from './pages/Purchase/PurchaseOrder';
 import PurchaseInvoice from './pages/Purchase/PurchaseInvoice';
@@ -45,11 +39,8 @@ import StockSummary from './pages/Inventory/StockSummary';
 import StockLedger from './pages/Inventory/StockLedger';
 import StockTransfer from './pages/Inventory/StockTransfer';
 import StockAdjustment from './pages/Inventory/StockAdjustment';
-<<<<<<< HEAD
 import StockOutEntry from './pages/Inventory/StockOutEntry';
 import StockOutHistory from './pages/Inventory/StockOutHistory';
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
 
 // Reports
 import TrialBalance from './pages/Reports/TrialBalance';
@@ -147,22 +138,16 @@ function App() {
               <Route path="/masters/account-groups" element={<AccountGroups />} />
               <Route path="/masters/ledgers" element={<LedgerMaster currentBranch={currentBranch} />} />
               <Route path="/masters/items" element={<ItemMaster />} />
-<<<<<<< HEAD
+              <Route path="/masters/customers" element={<CustomerMaster />} />
               <Route path="/masters/suppliers" element={<SupplierMaster />} />
               <Route path="/masters/stock-maintenance" element={<StockAdjustment currentBranch={currentBranch} />} />
               <Route path="/masters/stock-out-entry" element={<StockOutEntry currentBranch={currentBranch} />} />
-=======
-              <Route path="/masters/customers" element={<CustomerMaster />} />
-              <Route path="/masters/suppliers" element={<SupplierMaster />} />
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
               
               {/* Accounting */}
               <Route path="/accounting/voucher" element={<VoucherEntry currentBranch={currentBranch} />} />
               <Route path="/accounting/voucher/:type" element={<VoucherEntry currentBranch={currentBranch} />} />
               <Route path="/accounting/vouchers" element={<VoucherList currentBranch={currentBranch} />} />
               
-<<<<<<< HEAD
-=======
               {/* Sales */}
               <Route path="/sales/quotation" element={<Quotation currentBranch={currentBranch} />} />
               <Route path="/sales/order" element={<SalesOrder currentBranch={currentBranch} />} />
@@ -170,7 +155,6 @@ function App() {
               <Route path="/sales/invoice/:type" element={<SalesInvoice currentBranch={currentBranch} />} />
               <Route path="/sales/history" element={<SalesHistory currentBranch={currentBranch} />} />
               
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
               {/* Purchase */}
               <Route path="/purchase/order" element={<PurchaseOrder currentBranch={currentBranch} />} />
               <Route path="/purchase/invoice" element={<PurchaseInvoice currentBranch={currentBranch} />} />
@@ -179,11 +163,8 @@ function App() {
               {/* Inventory */}
               <Route path="/inventory/stock" element={<StockSummary currentBranch={currentBranch} />} />
               <Route path="/inventory/ledger" element={<StockLedger currentBranch={currentBranch} />} />
-<<<<<<< HEAD
               <Route path="/inventory/out-entry" element={<StockOutEntry currentBranch={currentBranch} />} />
               <Route path="/inventory/out-history" element={<StockOutHistory currentBranch={currentBranch} />} />
-=======
->>>>>>> f709e2d3170230ace218f088f0c7a65d0a20ad68
               <Route path="/inventory/transfer" element={<StockTransfer currentBranch={currentBranch} />} />
               <Route path="/inventory/adjustment" element={<StockAdjustment currentBranch={currentBranch} />} />
               

@@ -4,8 +4,22 @@ Complete Chart of Accounts and Ledger Posting Engine
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
-from motor.motor_asyncio import AsyncIOMotorDatabase
 import uuid
+
+DatabaseHandle = Any
+
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db_models import AccountGroup as DBAccountGroup
+from db_models import Branch as DBBranch
+from db_models import Ledger as DBLedger
+from db_models import LedgerTransaction as DBLedgerTransaction
+from db_models import Voucher as DBVoucher
+
+
+def _is_sql_session(db: Any) -> bool:
+    return isinstance(db, AsyncSession)
 
 # Standard Indian Chart of Accounts Structure
 STANDARD_CHART_OF_ACCOUNTS = [
@@ -114,8 +128,66 @@ GST_LEDGERS = [
 ]
 
 
-async def seed_chart_of_accounts(db: AsyncIOMotorDatabase, branch_id: str):
+async def seed_chart_of_accounts(db: DatabaseHandle, branch_id: str):
     """Seed standard Indian Chart of Accounts"""
+    if _is_sql_session(db):
+        existing = await db.execute(select(func.count(DBAccountGroup.id)))
+        existing_count = existing.scalar() or 0
+        if existing_count > 0:
+            return {"message": "Chart of accounts already exists", "count": existing_count}
+
+        code_to_id = {}
+        for group_data in STANDARD_CHART_OF_ACCOUNTS:
+            group_id = str(uuid.uuid4())
+            code_to_id[group_data["code"]] = group_id
+            parent_id = code_to_id.get(group_data["parent"]) if group_data["parent"] else None
+            db.add(DBAccountGroup(
+                id=group_id,
+                code=group_data["code"],
+                name=group_data["name"],
+                account_type=group_data["type"],
+                nature=group_data["nature"],
+                parent_id=parent_id,
+                affects_gross_profit=group_data["affects_gp"],
+                is_system=True,
+                is_active=True,
+                created_at=datetime.now(timezone.utc),
+            ))
+
+        await db.flush()
+
+        standard_ledgers = [
+            *GST_LEDGERS,
+            {"name": "Cash", "group_code": "A0101", "nature": "debit"},
+            {"name": "Sales Account", "group_code": "I0101", "nature": "credit"},
+            {"name": "Sales - Kacha Bill", "group_code": "I0102", "nature": "credit"},
+            {"name": "Purchase Account", "group_code": "E0101", "nature": "debit"},
+            {"name": "Opening Stock", "group_code": "A0104", "nature": "debit"},
+            {"name": "Closing Stock", "group_code": "A0104", "nature": "debit"},
+            {"name": "Profit & Loss Account", "group_code": "C03", "nature": "credit"},
+        ]
+
+        for ledger_data in standard_ledgers:
+            group_id = code_to_id.get(ledger_data["group_code"])
+            if not group_id:
+                continue
+            db.add(DBLedger(
+                id=str(uuid.uuid4()),
+                name=ledger_data["name"],
+                code=ledger_data["name"].upper().replace(" ", "_"),
+                account_group_id=group_id,
+                branch_id=branch_id,
+                opening_balance=0.0,
+                balance_type=ledger_data.get("nature", "debit"),
+                current_balance=0.0,
+                is_party=False,
+                is_system=True,
+                is_active=True,
+                created_at=datetime.now(timezone.utc),
+            ))
+
+        await db.commit()
+        return {"message": "Chart of accounts seeded successfully", "groups": len(STANDARD_CHART_OF_ACCOUNTS)}
     
     # Check if already seeded
     existing_count = await db.account_groups.count_documents({})
@@ -202,7 +274,7 @@ async def seed_chart_of_accounts(db: AsyncIOMotorDatabase, branch_id: str):
 
 
 async def post_to_ledgers(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     voucher_id: str,
     voucher_number: str,
     voucher_type: str,
@@ -212,6 +284,37 @@ async def post_to_ledgers(
     is_reversal: bool = False
 ):
     """Post voucher entries to ledgers with running balance"""
+    if _is_sql_session(db):
+        for entry in entries:
+            ledger_id = entry["ledger_id"]
+            debit = entry.get("debit", 0) or 0
+            credit = entry.get("credit", 0) or 0
+            if is_reversal:
+                debit, credit = credit, debit
+
+            result = await db.execute(select(DBLedger).where(DBLedger.id == ledger_id))
+            ledger = result.scalar_one_or_none()
+            if not ledger:
+                continue
+
+            balance_change = debit - credit if ledger.balance_type == "debit" else credit - debit
+            ledger.current_balance = (ledger.current_balance or 0) + balance_change
+
+            db.add(DBLedgerTransaction(
+                id=str(uuid.uuid4()),
+                ledger_id=ledger_id,
+                voucher_id=voucher_id,
+                voucher_number=voucher_number,
+                voucher_type=voucher_type,
+                voucher_date=voucher_date,
+                branch_id=branch_id,
+                debit=debit,
+                credit=credit,
+                balance=ledger.current_balance,
+                narration=entry.get("narration"),
+                created_at=datetime.now(timezone.utc),
+            ))
+        return True
     
     for entry in entries:
         ledger_id = entry["ledger_id"]
@@ -261,7 +364,7 @@ async def post_to_ledgers(
     return True
 
 
-async def reverse_ledger_postings(db: AsyncIOMotorDatabase, voucher_id: str):
+async def reverse_ledger_postings(db: DatabaseHandle, voucher_id: str):
     """Reverse all ledger postings for a voucher"""
     
     transactions = await db.ledger_transactions.find({"voucher_id": voucher_id}).to_list(1000)
@@ -290,7 +393,7 @@ async def reverse_ledger_postings(db: AsyncIOMotorDatabase, voucher_id: str):
 
 
 async def get_next_voucher_number(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     voucher_type: str,
     branch_id: Optional[str] = None,
     financial_year: str = "2025-26"
@@ -310,6 +413,30 @@ async def get_next_voucher_number(
     
     prefix = prefix_map.get(voucher_type, "VC")
     branch_code = ""
+
+    if _is_sql_session(db):
+        if branch_id:
+            result = await db.execute(select(DBBranch).where(DBBranch.id == branch_id))
+            branch = result.scalar_one_or_none()
+            if branch:
+                branch_code = f"{branch.code}/"
+
+        query = select(DBVoucher).where(DBVoucher.voucher_type == voucher_type)
+        if branch_id:
+            query = query.where(DBVoucher.branch_id == branch_id)
+        query = query.order_by(desc(DBVoucher.created_at)).limit(1)
+
+        result = await db.execute(query)
+        last_voucher = result.scalar_one_or_none()
+        if last_voucher and last_voucher.voucher_number:
+            try:
+                new_num = int(last_voucher.voucher_number.split("/")[-1]) + 1
+            except (ValueError, IndexError):
+                new_num = 1
+        else:
+            new_num = 1
+
+        return f"{prefix}/{branch_code}{financial_year}/{new_num:05d}"
     
     if branch_id:
         branch = await db.branches.find_one({"id": branch_id})
@@ -340,7 +467,7 @@ async def get_next_voucher_number(
 
 
 async def create_reversal_voucher(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     original_voucher_id: str,
     reason: str,
     created_by: str
@@ -411,7 +538,7 @@ async def create_reversal_voucher(
 
 
 async def calculate_trial_balance(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     branch_id: Optional[str] = None,
     as_on_date: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -475,7 +602,7 @@ async def calculate_trial_balance(
 
 
 async def calculate_profit_loss(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     start_date: str,
     end_date: str,
     branch_id: Optional[str] = None
@@ -552,7 +679,7 @@ async def calculate_profit_loss(
 
 
 async def calculate_balance_sheet(
-    db: AsyncIOMotorDatabase,
+    db: DatabaseHandle,
     as_on_date: str,
     branch_id: Optional[str] = None
 ) -> Dict[str, Any]:
