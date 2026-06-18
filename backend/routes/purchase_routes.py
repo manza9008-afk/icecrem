@@ -14,7 +14,6 @@ from database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import desc, func
-from sqlalchemy.orm import flag_modified
 
 from utils import get_current_user
 from db_models import (
@@ -299,8 +298,7 @@ async def create_purchase_invoice(invoice_data: dict, session: AsyncSession = De
                     all_received = False
                     break
 
-            po.items = po_items
-            flag_modified(po, "items")
+            po.items = list(po_items)
             po.status = "completed" if all_received else "partial"
             session.add(po)
 
