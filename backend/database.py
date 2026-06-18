@@ -20,7 +20,16 @@ if DATABASE_URL.startswith("postgres://"):
 elif DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-engine = create_async_engine(DATABASE_URL, future=True, pool_pre_ping=True)
+# Remove sslmode from URL and pass via connect_args
+if "?sslmode=" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
+
+engine = create_async_engine(
+    DATABASE_URL,
+    future=True,
+    pool_pre_ping=True,
+    connect_args={"ssl": "require"}
+)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
