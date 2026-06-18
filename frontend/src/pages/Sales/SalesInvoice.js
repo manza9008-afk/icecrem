@@ -15,6 +15,7 @@ const SalesInvoice = ({ currentBranch }) => {
   });
   const [lineItems, setLineItems] = useState([{ id: 1, item_id: '', item_name: '', hsn_code: '', godown_id: '', quantity: 1, rate: 0, discount_percent: 0, gst_rate: 18 }]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchData(); setFormData(f => ({...f, invoice_type: type})); }, [currentBranch, type]);
 
   const fetchData = async () => {

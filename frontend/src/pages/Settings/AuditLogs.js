@@ -18,6 +18,7 @@ const AuditLogs = ({ currentBranch }) => {
   const entityTypes = ['user', 'role', 'voucher', 'ledger', 'item', 'sales_invoice', 'purchase_invoice', 'backup'];
   const actions = ['LOGIN', 'LOGOUT', 'USER_CREATED', 'USER_UPDATED', 'USER_DEACTIVATED', 'ROLE_CREATED', 'ROLE_UPDATED', 'SYSTEM_RESTORE'];
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchLogs();
   }, []);

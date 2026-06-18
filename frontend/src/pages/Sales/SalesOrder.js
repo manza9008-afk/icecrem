@@ -24,6 +24,7 @@ const SalesOrder = ({ currentBranch }) => {
     { id: 1, item_id: '', item_name: '', hsn_code: '', quantity: 1, rate: 0, discount_percent: 0, gst_rate: 18 }
   ]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchData();
   }, [currentBranch]);
