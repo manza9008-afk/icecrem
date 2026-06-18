@@ -107,10 +107,7 @@ const ItemMaster = () => {
               <th>Code</th>
               <th>Name</th>
               <th>Category</th>
-              <th>HSN</th>
               <th>Unit</th>
-              <th className="text-right">GST %</th>
-              <th className="text-right">Cost Price</th>
               <th className="text-right">Selling Price</th>
               <th className="text-right">Low Stock Alert</th>
               <th className="text-center">Actions</th>
@@ -122,10 +119,7 @@ const ItemMaster = () => {
                 <td><strong>{item.code}</strong></td>
                 <td>{item.name}</td>
                 <td>{item.category}</td>
-                <td>{item.hsn_code}</td>
                 <td>{item.unit}</td>
-                <td className="numeric">{item.gst_rate}%</td>
-                <td className="numeric">{formatCurrency(item.cost_price)}</td>
                 <td className="numeric">{formatCurrency(item.selling_price)}</td>
                 <td className="numeric">{getAlertQty(item)}</td>
                 <td className="text-center"><button className="btn btn-sm btn-secondary" onClick={() => handleEdit(item)}><Edit2 size={14} /></button></td>
@@ -150,11 +144,7 @@ const ItemMaster = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group"><label className="form-label">Category</label><input type="text" className="form-control" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} /></div>
-                  <div className="form-group"><label className="form-label">HSN Code *</label><input type="text" className="form-control" value={formData.hsn_code} onChange={e => setFormData({...formData, hsn_code: e.target.value})} required /></div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group"><label className="form-label">Unit *</label><select className="form-control" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})}><option>NOS</option><option>KGS</option><option>LTR</option><option>BOX</option><option>PCS</option><option>DOZ</option></select></div>
-                  <div className="form-group"><label className="form-label">GST Rate %</label><select className="form-control" value={formData.gst_rate} onChange={e => setFormData({...formData, gst_rate: parseFloat(e.target.value)})}><option value={0}>0%</option><option value={5}>5%</option><option value={12}>12%</option><option value={18}>18%</option><option value={28}>28%</option></select></div>
+                  <div className="form-group"><label className="form-label">Unit *</label><select className="form-control" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})}><option>NOS</option><option>BOX</option><option>PCS</option></select></div>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
@@ -171,7 +161,6 @@ const ItemMaster = () => {
                       />
                     </div>
                   </div>
-                  <div className="form-group"><label className="form-label">Cost Price</label><input type="number" step="0.01" className="form-control" value={formData.cost_price} onChange={e => setFormData({...formData, cost_price: parseFloat(e.target.value) || 0})} /></div>
                   <div className="form-group"><label className="form-label">Selling Price</label><input type="number" step="0.01" className="form-control" value={formData.selling_price} onChange={e => setFormData({...formData, selling_price: parseFloat(e.target.value) || 0})} /></div>
                 </div>
                 <div className="form-row">
