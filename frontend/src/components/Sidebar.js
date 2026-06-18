@@ -55,17 +55,17 @@ const Sidebar = ({ collapsed, onToggle }) => {
         { label: 'View Vouchers', path: '/accounting/vouchers' },
       ]
     },
-    { 
-      icon: Receipt, 
-      label: 'Sales', 
-      children: [
-        { label: 'Quotation', path: '/sales/quotation' },
-        { label: 'Sales Order', path: '/sales/order' },
-        { label: 'GST Invoice', path: '/sales/invoice/gst' },
-        { label: 'Kacha Bill', path: '/sales/invoice/kacha' },
-        { label: 'Sales History', path: '/sales/history' },
-      ]
-    },
+    // { 
+    //   icon: Receipt, 
+    //   label: 'Sales', 
+    //   children: [
+    //     { label: 'Quotation', path: '/sales/quotation' },
+    //     { label: 'Sales Order', path: '/sales/order' },
+    //     { label: 'GST Invoice', path: '/sales/invoice/gst' },
+    //     { label: 'Kacha Bill', path: '/sales/invoice/kacha' },
+    //     { label: 'Sales History', path: '/sales/history' },
+    //   ]
+    // },
     { 
       icon: Truck, 
       label: 'Purchase', 
