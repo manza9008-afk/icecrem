@@ -25,7 +25,13 @@ const ItemMaster = () => {
   const fetchItems = async () => {
     try {
       const response = await api.get('/inventory/items');
-      setItems(response.data);
+      const sorted = response.data.sort((a, b) => {
+        const codeA = isNaN(a.code) ? a.code : Number(a.code);
+        const codeB = isNaN(b.code) ? b.code : Number(b.code);
+        if (typeof codeA === 'number' && typeof codeB === 'number') return codeA - codeB;
+        return String(codeA).localeCompare(String(codeB));
+      });
+      setItems(sorted);
     } catch (error) {
       console.error('Error:', error);
     } finally {
