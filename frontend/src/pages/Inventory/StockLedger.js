@@ -65,9 +65,10 @@ const StockLedger = ({ currentBranch }) => {
   // Group same date + same item + same type into one row
   const groupedMovements = Object.values(
     movements.reduce((acc, m) => {
-      const key = `${m.date}__${m.item_name}__${m.size}__${m.movement_type}`;
+      const dateStr = m.date ? String(m.date).substring(0, 10) : '';
+      const key = `${dateStr}__${m.item_name}__${m.size}__${m.movement_type}`;
       if (!acc[key]) {
-        acc[key] = { ...m, in_qty: m.in_qty || 0, out_qty: m.out_qty || 0 };
+        acc[key] = { ...m, date: dateStr, in_qty: m.in_qty || 0, out_qty: m.out_qty || 0 };
       } else {
         acc[key].in_qty += m.in_qty || 0;
         acc[key].out_qty += m.out_qty || 0;
