@@ -163,6 +163,7 @@ function App() {
               {/* Inventory */}
               <Route path="/inventory/stock" element={<StockSummary currentBranch={currentBranch} />} />
               <Route path="/inventory/ledger" element={<StockLedger currentBranch={currentBranch} />} />
+              <Route path="/inventory/stock-ledger" element={<StockLedger currentBranch={currentBranch} showDate={true} />} />
               <Route path="/inventory/out-entry" element={<StockOutEntry currentBranch={currentBranch} />} />
               <Route path="/inventory/out-history" element={<StockOutHistory currentBranch={currentBranch} />} />
               <Route path="/inventory/transfer" element={<StockTransfer currentBranch={currentBranch} />} />

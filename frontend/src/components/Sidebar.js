@@ -84,6 +84,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
         { label: 'Inventory In / Out', path: '/inventory/ledger' },
         { label: 'Ready Stock', path: '/inventory/stock' },
         { label: 'Stock Maintenance', path: '/inventory/adjustment' },
+        { label: 'Stock Ledger', path: '/inventory/stock-ledger' },
         { label: 'Stock Transfer', path: '/inventory/transfer' },
       ]
     },

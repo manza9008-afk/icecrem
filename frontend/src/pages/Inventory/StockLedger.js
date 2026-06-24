@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Printer, Save } from 'lucide-react';
 import api, { formatDate, formatNumber, getTodayDate, getItemSizeLabel } from '../../services/api';
 
-const StockLedger = ({ currentBranch }) => {
+const StockLedger = ({ currentBranch, showDate = false }) => {
   const [movements, setMovements] = useState([]);
   const [items, setItems] = useState([]);
   const [godowns, setGodowns] = useState([]);
@@ -225,6 +225,7 @@ const StockLedger = ({ currentBranch }) => {
         <table className="data-grid">
           <thead>
             <tr>
+              {showDate && <th>Date</th>}
               <th>Item Name</th>
               <th>Size</th>
               <th>Type</th>
@@ -238,6 +239,7 @@ const StockLedger = ({ currentBranch }) => {
               const isAlert = Boolean(movement.is_low_stock);
               return (
                 <tr key={`${movement.id}-${idx}`} className={isAlert ? 'low-stock-row' : ''}>
+                  {showDate && <td>{formatDate(movement.date)}</td>}
                   <td><strong>{movement.item_name}</strong></td>
                   <td>{movement.size || '-'}</td>
                   <td>{movement.movement_type || '-'}</td>
