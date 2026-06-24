@@ -1,0 +1,45 @@
+INFO:     Started server process [38996]
+INFO:     Waiting for application startup.
+2026-05-11 10:13:11,624 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2026-05-11 10:13:11,947 - server - INFO - Created admin user
+2026-05-11 10:13:11,958 - server - INFO - Created company settings
+2026-05-11 10:13:12,082 - server - INFO - Created default branch, godown, and chart of accounts
+2026-05-11 10:13:12,099 - server - INFO - Seeded HSN codes
+2026-05-11 10:13:12,187 - server - INFO - Database indexes created
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+2026-05-11 10:14:52,236 - asyncio - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-05-11 10:15:00,215 - asyncio - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-05-11 13:04:23,982 - asyncio - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host

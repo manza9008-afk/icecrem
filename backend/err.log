@@ -1,0 +1,172 @@
+INFO:     Started server process [20196]
+INFO:     Waiting for application startup.
+ERROR:    Traceback (most recent call last):
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\starlette\routing.py", line 693, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+               ~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\fastapi\routing.py", line 133, in merged_lifespan
+    async with original_context(app) as maybe_original_state:
+               ~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\starlette\routing.py", line 569, in __aenter__
+    await self._router.startup()
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\starlette\routing.py", line 670, in startup
+    await handler()
+  File "C:\React_project\icecrem-main\icecrem-main\backend\server.py", line 356, in startup_db
+    await init_db()
+  File "C:\React_project\icecrem-main\icecrem-main\backend\database.py", line 44, in init_db
+    async with engine.begin() as conn:
+               ~~~~~~~~~~~~^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\contextlib.py", line 214, in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 1068, in begin
+    async with conn:
+               ^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\ext\asyncio\base.py", line 121, in __aenter__
+    return await self.start(is_ctxmanager=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 275, in start
+    await greenlet_spawn(self.sync_engine.connect)
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\engine\base.py", line 3295, in connect
+    return self._connection_cls(self)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\engine\base.py", line 144, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\engine\base.py", line 3319, in raw_connection
+    return self.pool.connect()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\base.py", line 448, in connect
+    return _ConnectionFairy._checkout(self)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\base.py", line 1272, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\impl.py", line 178, in _do_get
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 122, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\impl.py", line 176, in _do_get
+    return self._create_connection()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\base.py", line 389, in _create_connection
+    return _ConnectionRecord(self)
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 122, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\engine\create.py", line 667, in connect
+    return dialect.connect(*cargs_tup, **cparams)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\engine\default.py", line 630, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 955, in connect
+    await_only(creator_fn(*arg, **kw)),
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\asyncpg\connection.py", line 2443, in connect
+    return await connect_utils._connect(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<22 lines>...
+    )
+    ^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\asyncpg\connect_utils.py", line 1218, in _connect
+    conn = await _connect_addr(
+           ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\asyncpg\connect_utils.py", line 1054, in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\STELLAR CONSULTANCY\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\asyncpg\connect_utils.py", line 1102, in __connect_addr
+    await connected
+asyncpg.exceptions.InvalidPasswordError: password authentication failed for user "postgres"
+
+ERROR:    Application startup failed. Exiting.

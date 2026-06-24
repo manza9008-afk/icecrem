@@ -1,0 +1,102 @@
+.dashboard {
+  /* Dashboard specific styles */
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.quick-action-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+}
+
+.quick-action-btn svg {
+  color: var(--bg-header);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.activity-icon.sales {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.activity-icon.purchase {
+  background: #fed7d7;
+  color: #742a2a;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-desc {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.activity-meta {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.activity-meta .amount {
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.activity-meta .amount.sales {
+  color: var(--success);
+}
+
+.activity-meta .amount.purchase {
+  color: var(--danger);
+}

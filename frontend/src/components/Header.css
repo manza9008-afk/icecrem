@@ -1,0 +1,144 @@
+.header {
+  height: var(--header-height);
+  background: var(--bg-header);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  color: var(--text-light);
+  position: relative;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.date-display {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.financial-year {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.branch-selector,
+.user-menu {
+  position: relative;
+}
+
+.branch-btn,
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-light);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.branch-btn:hover,
+.user-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  z-index: 100;
+  color: var(--text-primary);
+}
+
+.branch-dropdown {
+  min-width: 280px;
+}
+
+.dropdown-header {
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.user-email {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+}
+
+.dropdown-item.active {
+  background: var(--bg-selected);
+}
+
+.dropdown-item.danger {
+  color: var(--danger);
+}
+
+.dropdown-item.danger:hover {
+  background: #fed7d7;
+}
+
+.branch-code {
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 40px;
+}
+
+.branch-name {
+  flex: 1;
+}
