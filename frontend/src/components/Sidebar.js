@@ -71,7 +71,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
       label: 'Purchase', 
       children: [
         { label: 'Purchase Order', path: '/purchase/order' },
-        { label: 'Purchase Entry', path: '/purchase/invoice' },
+        { label: 'Item In', path: '/purchase/invoice' },
         { label: 'Purchase History', path: '/purchase/history' },
       ]
     },
