@@ -108,12 +108,14 @@ async def update_item(
         if code_exists:
             raise HTTPException(status_code=400, detail="Item code already exists")
     
+    skip_fields = {"id", "created_at", "modified_at", "is_active"}
     for key, value in item_data.items():
-        setattr(existing, key, value)
-        
-    existing.modified_at = datetime.now(timezone.utc).isoformat()
+        if key not in skip_fields:
+            setattr(existing, key, value)
+
+    existing.modified_at = datetime.now(timezone.utc)
     await session.commit()
-    
+
     return {"message": "Item updated"}
 
 
