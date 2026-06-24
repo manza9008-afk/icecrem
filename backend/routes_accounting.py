@@ -22,7 +22,13 @@ from db_models import AccountGroup as DBAccountGroup, Ledger as DBLedger, Branch
 
 def to_dict(obj):
     if not obj: return {}
-    return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+    result = {}
+    for c in obj.__table__.columns:
+        val = getattr(obj, c.name)
+        if hasattr(val, 'isoformat'):
+            val = val.isoformat()
+        result[c.name] = val
+    return result
 
 # ==================== ACCOUNT GROUPS ====================
 

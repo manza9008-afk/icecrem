@@ -17,6 +17,9 @@ from db_models import Voucher as DBVoucher, Ledger as DBLedger, LedgerTransactio
 def to_dict(obj):
     if not obj: return {}
     d = {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+    for k, v in d.items():
+        if hasattr(v, 'isoformat'):
+            d[k] = v.isoformat()
     if 'entries' in d and isinstance(d['entries'], str):
         try: d['entries'] = json.loads(d['entries'])
         except: pass
