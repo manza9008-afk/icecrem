@@ -182,7 +182,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
                   <td>
                     <select className="form-control" value={item.item_id} onChange={e => handleItemChange(index, e.target.value)}>
                       <option value="">Select</option>
-                      {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                      {items.map(i => <option key={i.id} value={i.id}>{i.code} - {i.name}</option>)}
                     </select>
                   </td>
                   <td>{item.size || '-'}</td>
