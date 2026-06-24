@@ -163,9 +163,6 @@ const StockLedger = ({ currentBranch }) => {
 
       <div className="stats-grid">
         <div className="stat-card">
-          <div><div className="stat-label">Rows</div><div className="stat-value">{groupedMovements.length}</div></div>
-        </div>
-        <div className="stat-card">
           <div><div className="stat-label">Total In Qty</div><div className="stat-value">{formatNumber(totalInQty, 2)}</div></div>
         </div>
         <div className="stat-card">
@@ -228,7 +225,6 @@ const StockLedger = ({ currentBranch }) => {
         <table className="data-grid">
           <thead>
             <tr>
-              <th>Date</th>
               <th>Item Name</th>
               <th>Size</th>
               <th>Type</th>
@@ -242,7 +238,6 @@ const StockLedger = ({ currentBranch }) => {
               const isAlert = Boolean(movement.is_low_stock);
               return (
                 <tr key={`${movement.id}-${idx}`} className={isAlert ? 'low-stock-row' : ''}>
-                  <td>{formatDate(movement.date)}</td>
                   <td><strong>{movement.item_name}</strong></td>
                   <td>{movement.size || '-'}</td>
                   <td>{movement.movement_type || '-'}</td>
