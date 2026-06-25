@@ -43,3 +43,16 @@ async def get_db():
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Drop unique constraint on items.code if exists
+        try:
+            await conn.execute(__import__('sqlalchemy').text(
+                "ALTER TABLE items DROP CONSTRAINT IF EXISTS ix_items_code;"
+            ))
+        except Exception:
+            pass
+        try:
+            await conn.execute(__import__('sqlalchemy').text(
+                "DROP INDEX IF EXISTS ix_items_code;"
+            ))
+        except Exception:
+            pass
