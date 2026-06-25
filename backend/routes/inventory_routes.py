@@ -76,12 +76,6 @@ async def get_item(item_id: str, current_user: dict = Depends(get_current_user),
 @router.post("/items")
 async def create_item(item_data: dict, current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_db)):
     """Create a new item"""
-    # Check code uniqueness
-    res = await session.execute(select(DBItem).where(DBItem.code == item_data["code"]))
-    existing = res.scalar_one_or_none()
-    if existing:
-        raise HTTPException(status_code=400, detail="Item code already exists")
-    
     new_item = DBItem(id=str(uuid.uuid4()), **item_data, is_active=True, created_at=datetime.now(timezone.utc))
     session.add(new_item)
     await session.commit()
@@ -100,13 +94,6 @@ async def update_item(
     existing = res.scalar_one_or_none()
     if not existing:
         raise HTTPException(status_code=404, detail="Item not found")
-    
-    # Check code uniqueness
-    if "code" in item_data:
-        code_res = await session.execute(select(DBItem).where(DBItem.code == item_data["code"]).where(DBItem.id != item_id))
-        code_exists = code_res.scalar_one_or_none()
-        if code_exists:
-            raise HTTPException(status_code=400, detail="Item code already exists")
     
     skip_fields = {"id", "created_at", "modified_at", "is_active"}
     for key, value in item_data.items():
