@@ -33,10 +33,16 @@ const PurchaseInvoice = ({ currentBranch }) => {
     }
   };
 
+  const focusField = (id, delay = 50) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) { el.focus(); if (el.select) el.select(); }
+    }, delay);
+  };
+
   const handleItemChange = (index, itemId) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
-
     const newItems = [...lineItems];
     newItems[index] = {
       ...newItems[index],
@@ -48,19 +54,19 @@ const PurchaseInvoice = ({ currentBranch }) => {
       gst_rate: 0
     };
     setLineItems(newItems);
+  };
 
-    // Enter dabao toh godown pe jump karo
-    setTimeout(() => {
-      const godownSelect = document.querySelector(`#godown-${index}`);
-      if (godownSelect) godownSelect.focus();
-    }, 50);
+  const handleItemKeyDown = (e, index) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      focusField(`godown-${index}`);
+    }
   };
 
   const handleGodownKeyDown = (e, index) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const qtyInput = document.querySelector(`#qty-${index}`);
-      if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+      focusField(`qty-${index}`);
     }
   };
 
@@ -68,16 +74,10 @@ const PurchaseInvoice = ({ currentBranch }) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (index === lineItems.length - 1) {
-        // Last row hai toh new row add karo
         addLineItem();
-        setTimeout(() => {
-          const nextItem = document.querySelector(`#item-${index + 1}`);
-          if (nextItem) nextItem.focus();
-        }, 50);
+        focusField(`item-${index + 1}`, 100);
       } else {
-        // Next row ke item pe jump karo
-        const nextItem = document.querySelector(`#item-${index + 1}`);
-        if (nextItem) nextItem.focus();
+        focusField(`item-${index + 1}`);
       }
     }
   };
@@ -212,7 +212,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
                 <tr key={item.id}>
                   <td className="text-center">{index + 1}</td>
                   <td>
-                    <select id={`item-${index}`} className="form-control" value={item.item_id} onChange={e => handleItemChange(index, e.target.value)}>
+                    <select id={`item-${index}`} className="form-control" value={item.item_id} onChange={e => handleItemChange(index, e.target.value)} onKeyDown={e => handleItemKeyDown(e, index)}>
                       <option value="">Select</option>
                       {items.map(i => <option key={i.id} value={i.id}>{i.code} - {i.name}</option>)}
                     </select>
