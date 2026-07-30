@@ -114,7 +114,9 @@ const StockSummary = ({ currentBranch }) => {
                   <td className="numeric">{threshold > 0 ? formatNumber(threshold, 2) : '-'}</td>
                   <td>
                     {isAlert ? (
-                      <span className="badge badge-danger"><AlertTriangle size={11} /> Low {formatNumber(s.ready_qty, 2)}</span>
+                      <span className="badge badge-danger">
+                        <AlertTriangle size={11} /> Low - Add {formatNumber(threshold - Number(s.ready_qty || 0), 2)}
+                      </span>
                     ) : (
                       <span className="badge badge-success">OK</span>
                     )}

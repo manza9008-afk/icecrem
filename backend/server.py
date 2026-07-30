@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import engine, SessionLocal, Base, get_db, init_db
 from db_models import User, CompanySettings, Branch, Godown, Customer, Supplier, HSNMaster
 from legacy_pg import PostgresDocumentStore
+from services.inventory_service import get_ready_stock_summary
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -148,14 +149,17 @@ async def get_current_user_info(current_user: dict = Depends(get_current_user), 
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(
     branch_id: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
 ):
     # NOTE: Pending migration of full ORM models to calculate actual dashboard stats
+    ready_stock = await get_ready_stock_summary(session, branch_id, None)
+    low_stock_items = sum(1 for item in ready_stock if item.get("is_low_stock"))
     return {
         "today_sales": 0,
         "monthly_sales": 0,
         "today_purchases": 0,
-        "low_stock_items": 0,
+        "low_stock_items": low_stock_items,
         "outstanding_receivables": 0,
         "pending_orders": 0
     }

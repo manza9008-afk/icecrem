@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Search, AlertTriangle } from 'lucide-react';
 import api from '../../services/api';
 
-const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
 
 const emptyItemForm = {
   code: '', name: '', print_name: '', category: 'General', hsn_code: '', unit: 'NOS',
@@ -108,7 +107,6 @@ const ItemMaster = () => {
               <th>Name</th>
               <th>Category</th>
               <th>Unit</th>
-              <th className="text-right">Selling Price</th>
               <th className="text-right">Low Stock Alert</th>
               <th className="text-center">Actions</th>
             </tr>
@@ -120,7 +118,6 @@ const ItemMaster = () => {
                 <td>{item.name}</td>
                 <td>{item.category}</td>
                 <td>{item.unit}</td>
-                <td className="numeric">{formatCurrency(item.selling_price)}</td>
                 <td className="numeric">{getAlertQty(item)}</td>
                 <td className="text-center"><button className="btn btn-sm btn-secondary" onClick={() => handleEdit(item)}><Edit2 size={14} /></button></td>
               </tr>
@@ -161,7 +158,6 @@ const ItemMaster = () => {
                       />
                     </div>
                   </div>
-                  <div className="form-group"><label className="form-label">Selling Price</label><input type="number" step="0.01" className="form-control" value={formData.selling_price} onChange={e => setFormData({...formData, selling_price: parseFloat(e.target.value) || 0})} /></div>
                 </div>
                 <div className="form-row">
                   <div className="form-group"><label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}><input type="checkbox" checked={formData.is_batch_wise} onChange={e => setFormData({...formData, is_batch_wise: e.target.checked})} /><span>Batch-wise Tracking</span></label></div>

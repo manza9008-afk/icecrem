@@ -77,7 +77,7 @@ const Dashboard = ({ currentBranch }) => {
           </div>
         </div>
 
-        <div className="stat-card">
+        <Link to="/inventory/stock" className="stat-card stat-card-link">
           <div className="stat-icon" style={{ background: '#fed7d7' }}>
             <AlertTriangle size={24} color="#e53e3e" />
           </div>
@@ -85,7 +85,7 @@ const Dashboard = ({ currentBranch }) => {
             <div className="stat-label">Low Stock Items</div>
             <div className="stat-value">{stats?.low_stock_items || 0}</div>
           </div>
-        </div>
+        </Link>
 
         <div className="stat-card">
           <div className="stat-icon" style={{ background: '#ebf8ff' }}>
