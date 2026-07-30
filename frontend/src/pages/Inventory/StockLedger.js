@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Printer, Save } from 'lucide-react';
 import api, { formatDate, formatNumber, getTodayDate, getItemSizeLabel } from '../../services/api';
 
-const StockLedger = ({ currentBranch }) => {
+const StockLedger = ({ currentBranch, showDate = false }) => {
   const [movements, setMovements] = useState([]);
   const [items, setItems] = useState([]);
   const [godowns, setGodowns] = useState([]);
@@ -62,9 +62,28 @@ const StockLedger = ({ currentBranch }) => {
     }
   };
 
-  const totalInQty = movements.reduce((sum, item) => sum + (item.in_qty || 0), 0);
-  const totalOutQty = movements.reduce((sum, item) => sum + (item.out_qty || 0), 0);
-  const alertCount = movements.filter(item => item.is_low_stock).length;
+  // Group same date + same item + same type into one row
+  const groupedMovements = Object.values(
+    movements.reduce((acc, m) => {
+      const dateStr = m.date ? String(m.date).substring(0, 10) : '';
+      const key = `${dateStr}__${m.item_name}__${m.size}__${m.movement_type}`;
+      if (!acc[key]) {
+        acc[key] = { ...m, date: dateStr, in_qty: m.in_qty || 0, out_qty: m.out_qty || 0 };
+      } else {
+        acc[key].in_qty += m.in_qty || 0;
+        acc[key].out_qty += m.out_qty || 0;
+        if (m.is_low_stock) {
+          acc[key].is_low_stock = true;
+          acc[key].balance_qty = m.balance_qty;
+        }
+      }
+      return acc;
+    }, {})
+  );
+
+  const totalInQty = groupedMovements.reduce((sum, item) => sum + (item.in_qty || 0), 0);
+  const totalOutQty = groupedMovements.reduce((sum, item) => sum + (item.out_qty || 0), 0);
+  const alertCount = groupedMovements.filter(item => item.is_low_stock).length;
 
   const handleOutItemChange = (itemId) => {
     const item = items.find(i => i.id === itemId);
@@ -144,7 +163,7 @@ const StockLedger = ({ currentBranch }) => {
 
       <div className="stats-grid">
         <div className="stat-card">
-          <div><div className="stat-label">Rows</div><div className="stat-value">{movements.length}</div></div>
+          <div><div className="stat-label">Rows</div><div className="stat-value">{groupedMovements.length}</div></div>
         </div>
         <div className="stat-card">
           <div><div className="stat-label">Total In Qty</div><div className="stat-value">{formatNumber(totalInQty, 2)}</div></div>
@@ -209,7 +228,7 @@ const StockLedger = ({ currentBranch }) => {
         <table className="data-grid">
           <thead>
             <tr>
-              <th>Date</th>
+              {showDate && <th>Date</th>}
               <th>Item Name</th>
               <th>Size</th>
               <th>Type</th>
@@ -219,11 +238,11 @@ const StockLedger = ({ currentBranch }) => {
             </tr>
           </thead>
           <tbody>
-            {movements.map((movement) => {
+            {groupedMovements.map((movement, idx) => {
               const isAlert = Boolean(movement.is_low_stock);
               return (
-                <tr key={movement.id} className={isAlert ? 'low-stock-row' : ''}>
-                  <td>{formatDate(movement.date)}</td>
+                <tr key={`${movement.id}-${idx}`} className={isAlert ? 'low-stock-row' : ''}>
+                  {showDate && <td>{formatDate(movement.date)}</td>}
                   <td><strong>{movement.item_name}</strong></td>
                   <td>{movement.size || '-'}</td>
                   <td>{movement.movement_type || '-'}</td>
@@ -240,7 +259,7 @@ const StockLedger = ({ currentBranch }) => {
             })}
           </tbody>
         </table>
-        {movements.length === 0 && <div className="empty-state"><p>No inventory movement found</p></div>}
+        {groupedMovements.length === 0 && <div className="empty-state"><p>No inventory movement found</p></div>}
       </div>
     </div>
   );

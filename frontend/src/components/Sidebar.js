@@ -71,8 +71,8 @@ const Sidebar = ({ collapsed, onToggle }) => {
       label: 'Purchase', 
       children: [
         { label: 'Purchase Order', path: '/purchase/order' },
-        { label: 'Purchase Entry', path: '/purchase/invoice' },
-        { label: 'Purchase History', path: '/purchase/history' },
+        { label: 'Item In', path: '/purchase/invoice' },
+        { label: 'In History', path: '/purchase/history' },
       ]
     },
     { 
@@ -84,10 +84,8 @@ const Sidebar = ({ collapsed, onToggle }) => {
         { label: 'Inventory In / Out', path: '/inventory/ledger' },
         { label: 'Ready Stock', path: '/inventory/stock' },
         { label: 'Stock Maintenance', path: '/inventory/adjustment' },
-        { label: 'Stock Summary', path: '/inventory/stock' },
-        { label: 'Stock Ledger', path: '/inventory/ledger' },
+        { label: 'Stock Ledger', path: '/inventory/stock-ledger' },
         { label: 'Stock Transfer', path: '/inventory/transfer' },
-        { label: 'Stock Adjustment', path: '/inventory/adjustment' },
       ]
     },
     { 

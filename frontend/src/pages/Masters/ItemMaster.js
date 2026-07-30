@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Search, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, AlertTriangle } from 'lucide-react';
 import api from '../../services/api';
 
 
@@ -25,7 +25,13 @@ const ItemMaster = () => {
   const fetchItems = async () => {
     try {
       const response = await api.get('/inventory/items');
-      setItems(response.data);
+      const sorted = response.data.sort((a, b) => {
+        const codeA = isNaN(a.code) ? a.code : Number(a.code);
+        const codeB = isNaN(b.code) ? b.code : Number(b.code);
+        if (typeof codeA === 'number' && typeof codeB === 'number') return codeA - codeB;
+        return String(codeA).localeCompare(String(codeB));
+      });
+      setItems(sorted);
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -75,6 +81,20 @@ const ItemMaster = () => {
     setShowModal(true);
   };
 
+  const handleDelete = async (item) => {
+    if (!window.confirm(`Delete item "${item.name}"?`)) return;
+    try {
+      await api.delete(`/inventory/items/${item.id}`);
+      fetchItems();
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        'Error deleting item';
+      alert(errorMessage);
+    }
+  };
+
   const closeModal = () => {
     setShowModal(false);
     setEditingItem(null);
@@ -119,7 +139,10 @@ const ItemMaster = () => {
                 <td>{item.category}</td>
                 <td>{item.unit}</td>
                 <td className="numeric">{getAlertQty(item)}</td>
-                <td className="text-center"><button className="btn btn-sm btn-secondary" onClick={() => handleEdit(item)}><Edit2 size={14} /></button></td>
+                <td className="text-center">
+                  <button className="btn btn-sm btn-secondary" onClick={() => handleEdit(item)}><Edit2 size={14} /></button>{' '}
+                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(item)}><Trash2 size={14} /></button>
+                </td>
               </tr>
             ))}
           </tbody>

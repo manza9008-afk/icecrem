@@ -24,11 +24,13 @@ elif DATABASE_URL.startswith("postgresql://"):
 if "?sslmode=" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
 
+is_local = "localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL
+
 engine = create_async_engine(
     DATABASE_URL,
     future=True,
     pool_pre_ping=True,
-    connect_args={"ssl": "require"}
+    connect_args={} if is_local else {"ssl": "require"}
 )
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -41,3 +43,16 @@ async def get_db():
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Drop unique constraint on items.code if exists
+        try:
+            await conn.execute(__import__('sqlalchemy').text(
+                "ALTER TABLE items DROP CONSTRAINT IF EXISTS ix_items_code;"
+            ))
+        except Exception:
+            pass
+        try:
+            await conn.execute(__import__('sqlalchemy').text(
+                "DROP INDEX IF EXISTS ix_items_code;"
+            ))
+        except Exception:
+            pass

@@ -16,7 +16,13 @@ from utils import get_current_user
 
 def to_dict(obj):
     if not obj: return {}
-    return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+    result = {}
+    for c in obj.__table__.columns:
+        val = getattr(obj, c.name)
+        if hasattr(val, 'isoformat'):
+            val = val.isoformat()
+        result[c.name] = val
+    return result
 
 STOCK_LOCATIONS = [
     {"code_suffix": "STORE", "name": "Store", "is_default": True},

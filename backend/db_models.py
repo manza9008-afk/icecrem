@@ -183,7 +183,7 @@ class Item(Base, TimestampMixin):
     __tablename__ = "items"
 
     id = Column(String, primary_key=True)
-    code = Column(String(100), unique=True, nullable=False, index=True)
+    code = Column(String(100), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     print_name = Column(String(255), nullable=True)
     category = Column(String(100), nullable=True, index=True)
