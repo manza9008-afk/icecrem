@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
@@ -11,56 +11,56 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
 // Masters
-import BranchMaster from './pages/Masters/BranchMaster';
-import GodownMaster from './pages/Masters/GodownMaster';
-import AccountGroups from './pages/Masters/AccountGroups';
-import LedgerMaster from './pages/Masters/LedgerMaster';
-import ItemMaster from './pages/Masters/ItemMaster';
-import CustomerMaster from './pages/Masters/CustomerMaster';
-import SupplierMaster from './pages/Masters/SupplierMaster';
+const BranchMaster = lazy(() => import('./pages/Masters/BranchMaster'));
+const GodownMaster = lazy(() => import('./pages/Masters/GodownMaster'));
+const AccountGroups = lazy(() => import('./pages/Masters/AccountGroups'));
+const LedgerMaster = lazy(() => import('./pages/Masters/LedgerMaster'));
+const ItemMaster = lazy(() => import('./pages/Masters/ItemMaster'));
+const CustomerMaster = lazy(() => import('./pages/Masters/CustomerMaster'));
+const SupplierMaster = lazy(() => import('./pages/Masters/SupplierMaster'));
 
 // Accounting
-import VoucherEntry from './pages/Accounting/VoucherEntry';
-import VoucherList from './pages/Accounting/VoucherList';
+const VoucherEntry = lazy(() => import('./pages/Accounting/VoucherEntry'));
+const VoucherList = lazy(() => import('./pages/Accounting/VoucherList'));
 
 // Sales
-import Quotation from './pages/Sales/Quotation';
-import SalesOrder from './pages/Sales/SalesOrder';
-import SalesInvoice from './pages/Sales/SalesInvoice';
-import SalesHistory from './pages/Sales/SalesHistory';
+const Quotation = lazy(() => import('./pages/Sales/Quotation'));
+const SalesOrder = lazy(() => import('./pages/Sales/SalesOrder'));
+const SalesInvoice = lazy(() => import('./pages/Sales/SalesInvoice'));
+const SalesHistory = lazy(() => import('./pages/Sales/SalesHistory'));
 
 // Purchase
-import PurchaseOrder from './pages/Purchase/PurchaseOrder';
-import PurchaseInvoice from './pages/Purchase/PurchaseInvoice';
-import PurchaseHistory from './pages/Purchase/PurchaseHistory';
+const PurchaseOrder = lazy(() => import('./pages/Purchase/PurchaseOrder'));
+const PurchaseInvoice = lazy(() => import('./pages/Purchase/PurchaseInvoice'));
+const PurchaseHistory = lazy(() => import('./pages/Purchase/PurchaseHistory'));
 
 // Inventory
-import StockSummary from './pages/Inventory/StockSummary';
-import StockLedger from './pages/Inventory/StockLedger';
-import StockTransfer from './pages/Inventory/StockTransfer';
-import StockAdjustment from './pages/Inventory/StockAdjustment';
-import StockOutEntry from './pages/Inventory/StockOutEntry';
-import StockOutHistory from './pages/Inventory/StockOutHistory';
+const StockSummary = lazy(() => import('./pages/Inventory/StockSummary'));
+const StockLedger = lazy(() => import('./pages/Inventory/StockLedger'));
+const StockTransfer = lazy(() => import('./pages/Inventory/StockTransfer'));
+const StockAdjustment = lazy(() => import('./pages/Inventory/StockAdjustment'));
+const StockOutEntry = lazy(() => import('./pages/Inventory/StockOutEntry'));
+const StockOutHistory = lazy(() => import('./pages/Inventory/StockOutHistory'));
 
 // Reports
-import TrialBalance from './pages/Reports/TrialBalance';
-import ProfitLoss from './pages/Reports/ProfitLoss';
-import BalanceSheet from './pages/Reports/BalanceSheet';
-import DayBook from './pages/Reports/DayBook';
-import LedgerStatement from './pages/Reports/LedgerStatement';
-import RatioAnalysis from './pages/Reports/RatioAnalysis';
-import OutstandingReport from './pages/Reports/OutstandingReport';
+const TrialBalance = lazy(() => import('./pages/Reports/TrialBalance'));
+const ProfitLoss = lazy(() => import('./pages/Reports/ProfitLoss'));
+const BalanceSheet = lazy(() => import('./pages/Reports/BalanceSheet'));
+const DayBook = lazy(() => import('./pages/Reports/DayBook'));
+const LedgerStatement = lazy(() => import('./pages/Reports/LedgerStatement'));
+const RatioAnalysis = lazy(() => import('./pages/Reports/RatioAnalysis'));
+const OutstandingReport = lazy(() => import('./pages/Reports/OutstandingReport'));
 
 // GST
-import GSTR1Report from './pages/GST/GSTR1Report';
-import GSTR3BReport from './pages/GST/GSTR3BReport';
-import HSNSummary from './pages/GST/HSNSummary';
-import TaxLiability from './pages/GST/TaxLiability';
+const GSTR1Report = lazy(() => import('./pages/GST/GSTR1Report'));
+const GSTR3BReport = lazy(() => import('./pages/GST/GSTR3BReport'));
+const HSNSummary = lazy(() => import('./pages/GST/HSNSummary'));
+const TaxLiability = lazy(() => import('./pages/GST/TaxLiability'));
 
 // Settings
-import Settings from './pages/Settings/Settings';
-import UserManagement from './pages/Settings/UserManagement';
-import AuditLogs from './pages/Settings/AuditLogs';
+const Settings = lazy(() => import('./pages/Settings/Settings'));
+const UserManagement = lazy(() => import('./pages/Settings/UserManagement'));
+const AuditLogs = lazy(() => import('./pages/Settings/AuditLogs'));
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -129,6 +129,7 @@ function App() {
             onBranchChange={handleBranchChange}
           />
           <div className="page-container">
+            <Suspense fallback={<div className="loading-container"><div className="spinner"></div></div>}>
             <Routes>
               <Route path="/" element={<Dashboard currentBranch={currentBranch} />} />
               
@@ -191,6 +192,7 @@ function App() {
               
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
+            </Suspense>
           </div>
         </div>
       </div>
