@@ -436,14 +436,30 @@ async def get_stock_summary(
             row["total_value"] += remaining * (batch.unit_cost or 0)
             row["batch_count"] += 1
 
+        item_ids = {iid for (iid, _, _) in grouped}
+        branch_ids = {bid for (_, bid, _) in grouped}
+        godown_ids = {gid for (_, _, gid) in grouped}
+
+        items_by_id = {}
+        if item_ids:
+            res = await db.execute(select(DBItem).where(DBItem.id.in_(item_ids)))
+            items_by_id = {item.id: item for item in res.scalars().all()}
+
+        branches_by_id = {}
+        if branch_ids:
+            res = await db.execute(select(DBBranch).where(DBBranch.id.in_(branch_ids)))
+            branches_by_id = {branch.id: branch for branch in res.scalars().all()}
+
+        godowns_by_id = {}
+        if godown_ids:
+            res = await db.execute(select(DBGodown).where(DBGodown.id.in_(godown_ids)))
+            godowns_by_id = {godown.id: godown for godown in res.scalars().all()}
+
         summaries = []
         for (iid, bid, gid), row in grouped.items():
-            item_res = await db.execute(select(DBItem).where(DBItem.id == iid))
-            branch_res = await db.execute(select(DBBranch).where(DBBranch.id == bid))
-            godown_res = await db.execute(select(DBGodown).where(DBGodown.id == gid))
-            item = item_res.scalar_one_or_none()
-            branch = branch_res.scalar_one_or_none()
-            godown = godown_res.scalar_one_or_none()
+            item = items_by_id.get(iid)
+            branch = branches_by_id.get(bid)
+            godown = godowns_by_id.get(gid)
             avg_cost = row["total_value"] / row["total_quantity"] if row["total_quantity"] > 0 else 0
             summaries.append({
                 "item_id": iid,
@@ -670,10 +686,12 @@ async def get_ready_stock_summary(
     """Return simplified ready stock grouped by item."""
     if _is_sql_session(db):
         summary = await get_stock_summary(db, None, branch_id, godown_id)
+        item_ids = [row["item_id"] for row in summary]
+        items_res = await db.execute(select(DBItem).where(DBItem.id.in_(item_ids)))
+        items_by_id = {item.id: _to_dict(item) for item in items_res.scalars().all()}
         ready_stock = []
         for row in summary:
-            item_res = await db.execute(select(DBItem).where(DBItem.id == row["item_id"]))
-            item = _to_dict(item_res.scalar_one_or_none())
+            item = items_by_id.get(row["item_id"], {})
             low_stock_threshold = get_low_stock_threshold(item)
             ready_qty = row.get("total_quantity", 0)
             ready_stock.append({
