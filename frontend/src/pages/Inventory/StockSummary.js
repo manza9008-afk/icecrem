@@ -7,6 +7,7 @@ const StockSummary = ({ currentBranch }) => {
   const [godowns, setGodowns] = useState([]);
   const [selectedGodown, setSelectedGodown] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showLowStockOnly, setShowLowStockOnly] = useState(true);
 
   useEffect(() => {
     setSelectedGodown('');
@@ -46,6 +47,7 @@ const StockSummary = ({ currentBranch }) => {
   const totalOutQty = stock.reduce((sum, item) => sum + (item.out_qty || 0), 0);
   const totalStockQty = stock.reduce((sum, item) => sum + (item.ready_qty || 0), 0);
   const alertCount = stock.filter(item => item.is_low_stock).length;
+  const visibleStock = showLowStockOnly ? stock.filter(item => item.is_low_stock) : stock;
 
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
@@ -63,6 +65,15 @@ const StockSummary = ({ currentBranch }) => {
             <option value="">All Stock</option>
             {godowns.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
+        </div>
+        <div className="filter-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={showLowStockOnly}
+              onChange={e => setShowLowStockOnly(e.target.checked)}
+            /> Show Only Low Stock
+          </label>
         </div>
       </div>
 
@@ -102,7 +113,7 @@ const StockSummary = ({ currentBranch }) => {
             </tr>
           </thead>
           <tbody>
-            {stock.map((s, i) => {
+            {visibleStock.map((s, i) => {
               const isAlert = Boolean(s.is_low_stock);
               const threshold = Number(s.low_stock_threshold || 0);
               return (
@@ -126,7 +137,11 @@ const StockSummary = ({ currentBranch }) => {
             })}
           </tbody>
         </table>
-        {stock.length === 0 && <div className="empty-state"><p>No stock found</p></div>}
+        {visibleStock.length === 0 && (
+          <div className="empty-state">
+            <p>{showLowStockOnly ? 'No low stock items' : 'No stock found'}</p>
+          </div>
+        )}
       </div>
     </div>
   );
