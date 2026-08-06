@@ -115,7 +115,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({ invoice_date: getTodayDate() });
   const [lineItems, setLineItems] = useState([
-    { id: 1, item_id: '', item_name: '', size: '', hsn_code: '', godown_id: '', quantity: 1, rate: 0, gst_rate: 0 }
+    { id: 1, item_id: '', item_name: '', size: '', hsn_code: '', quantity: 1, rate: 0, gst_rate: 0 }
   ]);
 
   useEffect(() => { fetchData(); }, [currentBranch]);
@@ -128,6 +128,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
       ]);
       setItems(itemsRes.data);
       setGodowns(godownsRes.data);
+      setFormData(prev => ({ ...prev, godown_id: prev.godown_id || godownsRes.data[0]?.id || '' }));
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -158,10 +159,6 @@ const PurchaseInvoice = ({ currentBranch }) => {
     setLineItems(newItems);
   };
 
-  const handleGodownKeyDown = (e, index) => {
-    if (e.key === 'Enter') { e.preventDefault(); focusField(`qty-${index}`); }
-  };
-
   const handleQtyKeyDown = (e, index) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -183,7 +180,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
   const addLineItem = () => {
     setLineItems([
       ...lineItems,
-      { id: Date.now(), item_id: '', item_name: '', size: '', hsn_code: '', godown_id: godowns[0]?.id || '', quantity: 1, rate: 0, gst_rate: 0 }
+      { id: Date.now(), item_id: '', item_name: '', size: '', hsn_code: '', quantity: 1, rate: 0, gst_rate: 0 }
     ]);
   };
 
@@ -194,6 +191,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
 
   const handleSave = async () => {
     if (!currentBranch) { alert('Select a branch'); return; }
+    if (!formData.godown_id) { alert('Select a stock'); return; }
     const validItems = lineItems.filter(i => i.item_id && i.quantity > 0);
     if (validItems.length === 0) { alert('Add at least one item'); return; }
 
@@ -203,7 +201,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
         item_id: i.item_id,
         item_name: i.item_name,
         hsn_code: i.hsn_code,
-        godown_id: i.godown_id || godowns[0]?.id,
+        godown_id: formData.godown_id,
         batch_number: '',
         expiry_date: null,
         quantity: parseFloat(i.quantity),
@@ -238,9 +236,9 @@ const PurchaseInvoice = ({ currentBranch }) => {
   };
 
   const resetForm = () => {
-    setFormData({ invoice_date: getTodayDate() });
+    setFormData({ invoice_date: getTodayDate(), godown_id: formData.godown_id || godowns[0]?.id || '' });
     setLineItems([
-      { id: 1, item_id: '', item_name: '', size: '', hsn_code: '', godown_id: godowns[0]?.id || '', quantity: 1, rate: 0, gst_rate: 0 }
+      { id: 1, item_id: '', item_name: '', size: '', hsn_code: '', quantity: 1, rate: 0, gst_rate: 0 }
     ]);
     focusField('item-0', 100);
   };
@@ -275,6 +273,16 @@ const PurchaseInvoice = ({ currentBranch }) => {
                 onChange={e => setFormData({ ...formData, invoice_date: e.target.value })}
               />
             </div>
+            <div className="form-group" style={{ maxWidth: '180px' }}>
+              <label className="form-label">Stock *</label>
+              <select
+                className="form-control"
+                value={formData.godown_id || ''}
+                onChange={e => setFormData({ ...formData, godown_id: e.target.value })}
+              >
+                {godowns.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -288,7 +296,6 @@ const PurchaseInvoice = ({ currentBranch }) => {
                 <th>#</th>
                 <th>Item Name</th>
                 <th>Size</th>
-                <th>Stock</th>
                 <th className="text-right">Qty In</th>
                 <th></th>
               </tr>
@@ -303,18 +310,10 @@ const PurchaseInvoice = ({ currentBranch }) => {
                       value={item.item_id}
                       inputId={`item-${index}`}
                       onChange={(itemId) => handleItemChange(index, itemId)}
-                      onEnter={() => focusField(`godown-${index}`)}
+                      onEnter={() => focusField(`qty-${index}`)}
                     />
                   </td>
                   <td>{item.size || '-'}</td>
-                  <td>
-                    <select id={`godown-${index}`} className="form-control" value={item.godown_id}
-                      onChange={e => updateLineItem(index, 'godown_id', e.target.value)}
-                      onKeyDown={e => handleGodownKeyDown(e, index)}
-                      style={{ width: '120px' }}>
-                      {godowns.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                    </select>
-                  </td>
                   <td>
                     <input id={`qty-${index}`} type="number" className="form-control text-right"
                       value={item.quantity}
