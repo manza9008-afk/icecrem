@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Package, Printer } from 'lucide-react';
+import { AlertTriangle, Package, Printer, Search } from 'lucide-react';
 import api, { formatNumber } from '../../services/api';
 
 const StockSummary = ({ currentBranch }) => {
@@ -8,6 +8,7 @@ const StockSummary = ({ currentBranch }) => {
   const [selectedGodown, setSelectedGodown] = useState('');
   const [loading, setLoading] = useState(true);
   const [showLowStockOnly, setShowLowStockOnly] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     setSelectedGodown('');
@@ -47,7 +48,9 @@ const StockSummary = ({ currentBranch }) => {
   const totalOutQty = stock.reduce((sum, item) => sum + (item.out_qty || 0), 0);
   const totalStockQty = stock.reduce((sum, item) => sum + (item.ready_qty || 0), 0);
   const alertCount = stock.filter(item => item.is_low_stock).length;
-  const visibleStock = showLowStockOnly ? stock.filter(item => item.is_low_stock) : stock;
+  const visibleStock = stock
+    .filter(item => !showLowStockOnly || item.is_low_stock)
+    .filter(item => item.item_name?.toLowerCase().includes(searchTerm.trim().toLowerCase()));
 
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
@@ -59,6 +62,15 @@ const StockSummary = ({ currentBranch }) => {
       </div>
 
       <div className="filter-bar">
+        <div className="filter-group">
+          <label><Search size={14} /></label>
+          <input
+            type="text"
+            placeholder="Search item..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
         <div className="filter-group">
           <label>Stock:</label>
           <select value={selectedGodown} onChange={e => setSelectedGodown(e.target.value)}>
@@ -139,7 +151,11 @@ const StockSummary = ({ currentBranch }) => {
         </table>
         {visibleStock.length === 0 && (
           <div className="empty-state">
-            <p>{showLowStockOnly ? 'No low stock items' : 'No stock found'}</p>
+            <p>
+              {searchTerm
+                ? 'No items match your search'
+                : showLowStockOnly ? 'No low stock items' : 'No stock found'}
+            </p>
           </div>
         )}
       </div>
