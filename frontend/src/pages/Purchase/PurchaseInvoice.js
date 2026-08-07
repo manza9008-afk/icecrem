@@ -162,11 +162,9 @@ const PurchaseInvoice = ({ currentBranch }) => {
   const handleQtyKeyDown = (e, index) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (index === lineItems.length - 1) {
+      if (index === 0) {
         addLineItem();
-        focusField(`item-${index + 1}`, 100);
-      } else {
-        focusField(`item-${index + 1}`);
+        focusField('item-0', 100);
       }
     }
   };
@@ -179,8 +177,8 @@ const PurchaseInvoice = ({ currentBranch }) => {
 
   const addLineItem = () => {
     setLineItems([
-      ...lineItems,
-      { id: Date.now(), item_id: '', item_name: '', size: '', hsn_code: '', quantity: 1, rate: 0, gst_rate: 0 }
+      { id: Date.now(), item_id: '', item_name: '', size: '', hsn_code: '', quantity: 1, rate: 0, gst_rate: 0 },
+      ...lineItems
     ]);
   };
 
@@ -330,7 +328,7 @@ const PurchaseInvoice = ({ currentBranch }) => {
               ))}
             </tbody>
           </table>
-          <button className="btn btn-secondary btn-sm" onClick={addLineItem} style={{ marginTop: '8px' }}>
+          <button className="btn btn-secondary btn-sm" onClick={() => { addLineItem(); focusField('item-0', 100); }} style={{ marginTop: '8px' }}>
             <Plus size={14} /> Add Item
           </button>
         </div>

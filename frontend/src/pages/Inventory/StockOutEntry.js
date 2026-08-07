@@ -165,11 +165,9 @@ const StockOutEntry = ({ currentBranch }) => {
   const handleQtyKeyDown = (e, index) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (index === lineItems.length - 1) {
+      if (index === 0) {
         addLineItem();
-        focusField(`item-${index + 1}`, 100);
-      } else {
-        focusField(`item-${index + 1}`);
+        focusField('item-0', 100);
       }
     }
   };
@@ -181,7 +179,7 @@ const StockOutEntry = ({ currentBranch }) => {
   };
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { id: Date.now(), item_id: '', item_name: '', size: '', available_qty: 0, quantity: 1 }]);
+    setLineItems([{ id: Date.now(), item_id: '', item_name: '', size: '', available_qty: 0, quantity: 1 }, ...lineItems]);
   };
 
   const removeLineItem = (index) => {
@@ -313,7 +311,7 @@ const StockOutEntry = ({ currentBranch }) => {
               ))}
             </tbody>
           </table>
-          <button className="btn btn-secondary btn-sm" onClick={addLineItem} style={{ marginTop: '8px' }}><Plus size={14} /> Add Item</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => { addLineItem(); focusField('item-0', 100); }} style={{ marginTop: '8px' }}><Plus size={14} /> Add Item</button>
         </div>
       </div>
 
