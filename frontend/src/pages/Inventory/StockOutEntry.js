@@ -97,9 +97,9 @@ const StockOutEntry = ({ currentBranch }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedEntry, setSavedEntry] = useState(null);
-  const [formData, setFormData] = useState({ transaction_date: getTodayDate(), remarks: '' });
+  const [formData, setFormData] = useState({ transaction_date: getTodayDate(), remarks: '', godown_id: '' });
   const [lineItems, setLineItems] = useState([
-    { id: 1, item_id: '', item_name: '', size: '', godown_id: '', available_qty: 0, quantity: 1 }
+    { id: 1, item_id: '', item_name: '', size: '', available_qty: 0, quantity: 1 }
   ]);
 
   useEffect(() => { fetchData(); }, [currentBranch]);
@@ -113,7 +113,8 @@ const StockOutEntry = ({ currentBranch }) => {
       setItems(itemsRes.data);
       setGodowns(godownsRes.data);
       const defaultGodownId = godownsRes.data[0]?.id || '';
-      setLineItems([{ id: 1, item_id: '', item_name: '', size: '', godown_id: defaultGodownId, available_qty: 0, quantity: 1 }]);
+      setFormData(prev => ({ ...prev, godown_id: defaultGodownId }));
+      setLineItems([{ id: 1, item_id: '', item_name: '', size: '', available_qty: 0, quantity: 1 }]);
       if (defaultGodownId) fetchStockItems(defaultGodownId);
     } catch (error) {
       console.error('Error:', error);
@@ -139,21 +140,16 @@ const StockOutEntry = ({ currentBranch }) => {
     }, delay);
   };
 
-  const handleStockChange = (index, godownId) => {
+  const handleGodownChange = (godownId) => {
     fetchStockItems(godownId);
-    const newItems = [...lineItems];
-    newItems[index] = { ...newItems[index], godown_id: godownId, item_id: '', item_name: '', size: '', available_qty: 0, quantity: 1 };
-    setLineItems(newItems);
-    focusField(`item-${index}`);
-  };
-
-  const handleStockKeyDown = (e, index) => {
-    if (e.key === 'Enter') { e.preventDefault(); focusField(`item-${index}`); }
+    setFormData(prev => ({ ...prev, godown_id: godownId }));
+    setLineItems(lineItems.map(item => ({ ...item, item_id: '', item_name: '', size: '', available_qty: 0 })));
+    focusField('item-0');
   };
 
   const handleItemChange = (index, itemId) => {
     const item = items.find(i => i.id === itemId);
-    const stockItem = (stockItemsByGodown[lineItems[index].godown_id] || []).find(i => i.item_id === itemId);
+    const stockItem = (stockItemsByGodown[formData.godown_id] || []).find(i => i.item_id === itemId);
     const newItems = [...lineItems];
     newItems[index] = {
       ...newItems[index],
@@ -171,9 +167,9 @@ const StockOutEntry = ({ currentBranch }) => {
       e.preventDefault();
       if (index === lineItems.length - 1) {
         addLineItem();
-        focusField(`godown-${index + 1}`, 100);
+        focusField(`item-${index + 1}`, 100);
       } else {
-        focusField(`godown-${index + 1}`);
+        focusField(`item-${index + 1}`);
       }
     }
   };
@@ -185,8 +181,7 @@ const StockOutEntry = ({ currentBranch }) => {
   };
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { id: Date.now(), item_id: '', item_name: '', size: '', godown_id: godowns[0]?.id || '', available_qty: 0, quantity: 1 }]);
-    if (godowns[0]?.id) fetchStockItems(godowns[0].id);
+    setLineItems([...lineItems, { id: Date.now(), item_id: '', item_name: '', size: '', available_qty: 0, quantity: 1 }]);
   };
 
   const removeLineItem = (index) => {
@@ -195,14 +190,15 @@ const StockOutEntry = ({ currentBranch }) => {
   };
 
   const resetForm = () => {
-    setFormData({ transaction_date: getTodayDate(), remarks: '' });
-    setLineItems([{ id: 1, item_id: '', item_name: '', size: '', godown_id: godowns[0]?.id || '', available_qty: 0, quantity: 1 }]);
+    setFormData({ transaction_date: getTodayDate(), remarks: '', godown_id: formData.godown_id || godowns[0]?.id || '' });
+    setLineItems([{ id: 1, item_id: '', item_name: '', size: '', available_qty: 0, quantity: 1 }]);
     setSavedEntry(null);
   };
 
   const handleSave = async () => {
     if (!currentBranch?.id) { alert('Select a branch'); return; }
-    const validItems = lineItems.filter(i => i.item_id && i.godown_id && Number(i.quantity || 0) > 0);
+    if (!formData.godown_id) { alert('Select a stock'); return; }
+    const validItems = lineItems.filter(i => i.item_id && Number(i.quantity || 0) > 0);
     if (validItems.length === 0) { alert('Add at least one item'); return; }
 
     setSaving(true);
@@ -211,13 +207,13 @@ const StockOutEntry = ({ currentBranch }) => {
       for (const item of validItems) {
         const response = await api.post('/inventory/stock/outward', {
           branch_id: currentBranch.id,
-          godown_id: item.godown_id,
+          godown_id: formData.godown_id,
           item_id: item.item_id,
           quantity: Number(item.quantity),
           transaction_date: formData.transaction_date,
           remarks: formData.remarks
         });
-        savedItems.push({ ...item, outward_number: response.data.outward_number, stock_name: godowns.find(g => g.id === item.godown_id)?.name || '' });
+        savedItems.push({ ...item, outward_number: response.data.outward_number, stock_name: godowns.find(g => g.id === formData.godown_id)?.name || '' });
       }
       setSavedEntry({ entry_number: savedItems[0]?.outward_number || '', transaction_date: formData.transaction_date, remarks: formData.remarks, items: savedItems });
       setStockItemsByGodown({});
@@ -256,6 +252,14 @@ const StockOutEntry = ({ currentBranch }) => {
               <input type="date" className="form-control" value={formData.transaction_date}
                 onChange={e => setFormData({ ...formData, transaction_date: e.target.value })} />
             </div>
+            <div className="form-group" style={{ maxWidth: '180px' }}>
+              <label className="form-label">Stock *</label>
+              <select className="form-control" value={formData.godown_id}
+                onChange={e => handleGodownChange(e.target.value)}>
+                <option value="">Select</option>
+                {godowns.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
             <div className="form-group">
               <label className="form-label">Remarks</label>
               <input type="text" className="form-control" value={formData.remarks}
@@ -272,7 +276,6 @@ const StockOutEntry = ({ currentBranch }) => {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Stock</th>
                 <th>Item Name</th>
                 <th>Size</th>
                 <th className="text-right">Available</th>
@@ -285,20 +288,11 @@ const StockOutEntry = ({ currentBranch }) => {
                 <tr key={item.id}>
                   <td className="text-center">{index + 1}</td>
                   <td>
-                    <select id={`godown-${index}`} className="form-control" value={item.godown_id}
-                      onChange={e => handleStockChange(index, e.target.value)}
-                      onKeyDown={e => handleStockKeyDown(e, index)}
-                      style={{ width: '130px' }}>
-                      <option value="">Select</option>
-                      {godowns.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                    </select>
-                  </td>
-                  <td>
                     <ItemSearchInput
                       items={items}
                       value={item.item_id}
                       inputId={`item-${index}`}
-                      disabled={!item.godown_id}
+                      disabled={!formData.godown_id}
                       onChange={(itemId) => handleItemChange(index, itemId)}
                       onEnter={() => focusField(`qty-${index}`)}
                     />
