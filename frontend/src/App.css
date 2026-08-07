@@ -301,9 +301,12 @@ html, body, #root {
 
 @media print {
   .sidebar, .header, .toolbar, .btn, .filter-bar { display: none !important; }
-  .main-content { margin-left: 0 !important; }
-  .page-container { padding: 0 !important; }
+  .app-layout { height: auto !important; overflow: visible !important; display: block !important; }
+  .main-content { margin-left: 0 !important; height: auto !important; overflow: visible !important; display: block !important; }
+  .page-container { padding: 0 !important; height: auto !important; overflow: visible !important; }
   .data-grid { font-size: 10px; }
+  .data-grid thead { position: static; }
+  .data-grid tr { page-break-inside: avoid; }
 }
 
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
