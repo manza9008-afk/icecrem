@@ -4,6 +4,7 @@ import api, { formatDate, formatNumber, getTodayDate, getItemSizeLabel } from '.
 
 const StockLedger = ({ currentBranch, showDate = false }) => {
   const [movements, setMovements] = useState([]);
+  const [todayMovements, setTodayMovements] = useState([]);
   const [items, setItems] = useState([]);
   const [godowns, setGodowns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +29,10 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
   useEffect(() => {
     fetchMovements();
   }, [currentBranch, selectedGodown, startDate, endDate]);
+
+  useEffect(() => {
+    fetchTodayMovements();
+  }, [currentBranch, selectedGodown]);
 
   const fetchMasters = async () => {
     try {
@@ -62,6 +67,28 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
     }
   };
 
+  // Local date (toISOString is UTC, which gives yesterday's date before 5:30 AM IST)
+  const getLocalToday = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+
+  const fetchTodayMovements = async () => {
+    try {
+      const today = getLocalToday();
+      const params = new URLSearchParams();
+      if (currentBranch?.id) params.append('branch_id', currentBranch.id);
+      if (selectedGodown) params.append('godown_id', selectedGodown);
+      params.append('start_date', today);
+      params.append('end_date', today);
+      const res = await api.get(`/inventory/stock/movements?${params.toString()}`);
+      setTodayMovements(res.data);
+    } catch (error) {
+      console.error(error);
+      setTodayMovements([]);
+    }
+  };
+
   // Group same date + same item + same type into one row
   const groupedMovements = Object.values(
     movements.reduce((acc, m) => {
@@ -83,6 +110,8 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
 
   const totalInQty = groupedMovements.reduce((sum, item) => sum + (item.in_qty || 0), 0);
   const totalOutQty = groupedMovements.reduce((sum, item) => sum + (item.out_qty || 0), 0);
+  const todayInQty = todayMovements.reduce((sum, m) => sum + (m.in_qty || 0), 0);
+  const todayOutQty = todayMovements.reduce((sum, m) => sum + (m.out_qty || 0), 0);
   const alertCount = groupedMovements.filter(item => item.is_low_stock).length;
 
   const handleOutItemChange = (itemId) => {
@@ -121,6 +150,7 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
       });
       setShowOutForm(false);
       fetchMovements();
+      fetchTodayMovements();
     } catch (error) {
       alert(error.response?.data?.detail || 'Error saving Out Qty');
     } finally {
@@ -164,6 +194,12 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
       <div className="stats-grid">
         <div className="stat-card">
           <div><div className="stat-label">Rows</div><div className="stat-value">{groupedMovements.length}</div></div>
+        </div>
+        <div className="stat-card">
+          <div><div className="stat-label">Today In Qty</div><div className="stat-value">{formatNumber(todayInQty, 2)}</div></div>
+        </div>
+        <div className="stat-card">
+          <div><div className="stat-label">Today Out Qty</div><div className="stat-value">{formatNumber(todayOutQty, 2)}</div></div>
         </div>
         <div className="stat-card">
           <div><div className="stat-label">Total In Qty</div><div className="stat-value">{formatNumber(totalInQty, 2)}</div></div>

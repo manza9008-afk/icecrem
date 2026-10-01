@@ -121,8 +121,8 @@ const LedgerMaster = ({ currentBranch }) => {
               <th>Type</th>
               <th className="text-center">Actions</th>
             </tr>
-          </thead>
-          <tbody>
+           </thead>
+           <tbody>
             {filteredLedgers.map(ledger => (
               <tr key={ledger.id}>
                 <td><strong>{ledger.code}</strong></td>
@@ -227,17 +227,17 @@ const LedgerMaster = ({ currentBranch }) => {
                     </div>
                   </>
                 )}
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Ledger</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+                 </div>
+                <div className="modal-footer">
+               <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancel</button>
+               <button type="submit" className="btn btn-primary">Save Ledger</button>
+               </div>
+               </form>
+            </div>
+             </div>
+           )}
+      </div>
+);
 };
 
 export default LedgerMaster;
