@@ -307,7 +307,14 @@ html, body, #root {
   .data-grid { font-size: 10px; }
   .data-grid thead { position: static; }
   .data-grid tr { page-break-inside: avoid; }
+  .data-grid tr.print-only-row { display: table-row !important; }
+  .pagination-bar { display: none !important; }
 }
+
+.data-grid tr.print-only-row { display: none; }
+.pagination-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-secondary); }
+.pagination-bar .btn-group { align-items: center; }
+.pagination-page { padding: 0 8px; font-weight: 600; color: var(--text-primary); }
 
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }

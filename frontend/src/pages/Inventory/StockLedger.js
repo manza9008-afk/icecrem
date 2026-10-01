@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Printer, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Printer, Save } from 'lucide-react';
 import api, { formatDate, formatNumber, getTodayDate, getItemSizeLabel } from '../../services/api';
+
+const PAGE_SIZE = 50;
 
 const StockLedger = ({ currentBranch, showDate = false }) => {
   const [movements, setMovements] = useState([]);
@@ -13,6 +15,7 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
   const [endDate, setEndDate] = useState('');
   const [selectedGodown, setSelectedGodown] = useState('');
   const [showOutForm, setShowOutForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [outForm, setOutForm] = useState({
     transaction_date: getTodayDate(),
     item_id: '',
@@ -33,6 +36,10 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
   useEffect(() => {
     fetchTodayMovements();
   }, [currentBranch, selectedGodown]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentBranch, selectedGodown, startDate, endDate]);
 
   const fetchMasters = async () => {
     try {
@@ -113,6 +120,11 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
   const todayInQty = todayMovements.reduce((sum, m) => sum + (m.in_qty || 0), 0);
   const todayOutQty = todayMovements.reduce((sum, m) => sum + (m.out_qty || 0), 0);
   const alertCount = groupedMovements.filter(item => item.is_low_stock).length;
+
+  const totalPages = Math.max(1, Math.ceil(groupedMovements.length / PAGE_SIZE));
+  const page = Math.min(currentPage, totalPages);
+  const pageStart = (page - 1) * PAGE_SIZE;
+  const pageEnd = Math.min(pageStart + PAGE_SIZE, groupedMovements.length);
 
   const handleOutItemChange = (itemId) => {
     const item = items.find(i => i.id === itemId);
@@ -276,8 +288,11 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
           <tbody>
             {groupedMovements.map((movement, idx) => {
               const isAlert = Boolean(movement.is_low_stock);
+              // Rows outside the current page stay in the DOM (hidden on screen) so Print still shows the full list
+              const onPage = idx >= pageStart && idx < pageEnd;
+              const rowClass = [isAlert ? 'low-stock-row' : '', onPage ? '' : 'print-only-row'].filter(Boolean).join(' ');
               return (
-                <tr key={`${movement.id}-${idx}`} className={isAlert ? 'low-stock-row' : ''}>
+                <tr key={`${movement.id}-${idx}`} className={rowClass}>
                   {showDate && <td>{formatDate(movement.date)}</td>}
                   <td><strong>{movement.item_name}</strong></td>
                   <td>{movement.size || '-'}</td>
@@ -296,6 +311,18 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
           </tbody>
         </table>
         {groupedMovements.length === 0 && <div className="empty-state"><p>No inventory movement found</p></div>}
+        {groupedMovements.length > PAGE_SIZE && (
+          <div className="pagination-bar">
+            <span>Showing {pageStart + 1}-{pageEnd} of {groupedMovements.length}</span>
+            <div className="btn-group">
+              <button className="btn btn-secondary btn-sm" disabled={page === 1}
+                onClick={() => setCurrentPage(page - 1)}><ChevronLeft size={14} /> Prev</button>
+              <span className="pagination-page">Page {page} of {totalPages}</span>
+              <button className="btn btn-secondary btn-sm" disabled={page === totalPages}
+                onClick={() => setCurrentPage(page + 1)}>Next <ChevronRight size={14} /></button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
