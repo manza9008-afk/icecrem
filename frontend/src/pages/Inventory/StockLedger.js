@@ -121,6 +121,12 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
   const todayOutQty = todayMovements.reduce((sum, m) => sum + (m.out_qty || 0), 0);
   const alertCount = groupedMovements.filter(item => item.is_low_stock).length;
 
+  const today = getLocalToday();
+  const isTodayView = startDate === today && endDate === today;
+  const isAllView = !startDate && !endDate;
+  const showToday = () => { setStartDate(today); setEndDate(today); };
+  const showAll = () => { setStartDate(''); setEndDate(''); };
+
   const totalPages = Math.max(1, Math.ceil(groupedMovements.length / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
   const pageStart = (page - 1) * PAGE_SIZE;
@@ -186,6 +192,13 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
       </div>
 
       <div className="filter-bar">
+        <div className="filter-group">
+          <label>Show:</label>
+          <div className="btn-group">
+            <button className={`btn btn-sm ${isTodayView ? 'btn-primary' : 'btn-secondary'}`} onClick={showToday}>Today</button>
+            <button className={`btn btn-sm ${isAllView ? 'btn-primary' : 'btn-secondary'}`} onClick={showAll}>All (Total)</button>
+          </div>
+        </div>
         <div className="filter-group">
           <label>Stock:</label>
           <select value={selectedGodown} onChange={e => setSelectedGodown(e.target.value)}>
