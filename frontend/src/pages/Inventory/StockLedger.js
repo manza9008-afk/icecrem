@@ -7,6 +7,7 @@ const PAGE_SIZE = 50;
 const StockLedger = ({ currentBranch, showDate = false }) => {
   const [movements, setMovements] = useState([]);
   const [todayMovements, setTodayMovements] = useState([]);
+  const [allTimeMovements, setAllTimeMovements] = useState([]);
   const [items, setItems] = useState([]);
   const [godowns, setGodowns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,7 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
 
   useEffect(() => {
     fetchTodayMovements();
+    fetchAllTimeMovements();
   }, [currentBranch, selectedGodown]);
 
   useEffect(() => {
@@ -96,6 +98,20 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
     }
   };
 
+  // All-time totals, independent of the Today / date filter
+  const fetchAllTimeMovements = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (currentBranch?.id) params.append('branch_id', currentBranch.id);
+      if (selectedGodown) params.append('godown_id', selectedGodown);
+      const res = await api.get(`/inventory/stock/movements?${params.toString()}`);
+      setAllTimeMovements(res.data);
+    } catch (error) {
+      console.error(error);
+      setAllTimeMovements([]);
+    }
+  };
+
   // Group same date + same item + same type into one row
   const groupedMovements = Object.values(
     movements.reduce((acc, m) => {
@@ -115,8 +131,10 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
     }, {})
   );
 
-  const totalInQty = groupedMovements.reduce((sum, item) => sum + (item.in_qty || 0), 0);
-  const totalOutQty = groupedMovements.reduce((sum, item) => sum + (item.out_qty || 0), 0);
+  const totalInQty = allTimeMovements.reduce((sum, m) => sum + (m.in_qty || 0), 0);
+  const totalOutQty = allTimeMovements.reduce((sum, m) => sum + (m.out_qty || 0), 0);
+  const selectedInQty = groupedMovements.reduce((sum, item) => sum + (item.in_qty || 0), 0);
+  const selectedOutQty = groupedMovements.reduce((sum, item) => sum + (item.out_qty || 0), 0);
   const todayInQty = todayMovements.reduce((sum, m) => sum + (m.in_qty || 0), 0);
   const todayOutQty = todayMovements.reduce((sum, m) => sum + (m.out_qty || 0), 0);
   const alertCount = groupedMovements.filter(item => item.is_low_stock).length;
@@ -124,8 +142,6 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
   const today = getLocalToday();
   const isTodayView = startDate === today && endDate === today;
   const isAllView = !startDate && !endDate;
-  const showToday = () => { setStartDate(today); setEndDate(today); };
-  const showAll = () => { setStartDate(''); setEndDate(''); };
 
   const totalPages = Math.max(1, Math.ceil(groupedMovements.length / PAGE_SIZE));
   const page = Math.min(currentPage, totalPages);
@@ -169,6 +185,7 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
       setShowOutForm(false);
       fetchMovements();
       fetchTodayMovements();
+      fetchAllTimeMovements();
     } catch (error) {
       alert(error.response?.data?.detail || 'Error saving Out Qty');
     } finally {
@@ -192,13 +209,6 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
       </div>
 
       <div className="filter-bar">
-        <div className="filter-group">
-          <label>Show:</label>
-          <div className="btn-group">
-            <button className={`btn btn-sm ${isTodayView ? 'btn-primary' : 'btn-secondary'}`} onClick={showToday}>Today</button>
-            <button className={`btn btn-sm ${isAllView ? 'btn-primary' : 'btn-secondary'}`} onClick={showAll}>All (Total)</button>
-          </div>
-        </div>
         <div className="filter-group">
           <label>Stock:</label>
           <select value={selectedGodown} onChange={e => setSelectedGodown(e.target.value)}>
@@ -232,6 +242,16 @@ const StockLedger = ({ currentBranch, showDate = false }) => {
         <div className="stat-card">
           <div><div className="stat-label">Total Out Qty</div><div className="stat-value">{formatNumber(totalOutQty, 2)}</div></div>
         </div>
+        {!isTodayView && !isAllView && (
+          <>
+            <div className="stat-card">
+              <div><div className="stat-label">Selected Dates In Qty</div><div className="stat-value">{formatNumber(selectedInQty, 2)}</div></div>
+            </div>
+            <div className="stat-card">
+              <div><div className="stat-label">Selected Dates Out Qty</div><div className="stat-value">{formatNumber(selectedOutQty, 2)}</div></div>
+            </div>
+          </>
+        )}
         <div className="stat-card">
           <div><div className="stat-label">Alerts</div><div className="stat-value">{alertCount}</div></div>
         </div>
