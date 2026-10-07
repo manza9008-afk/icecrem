@@ -223,6 +223,9 @@ const StockOutEntry = ({ currentBranch }) => {
     }
   };
 
+  const filledItems = lineItems.filter(i => i.item_id);
+  const totalQty = filledItems.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
+
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
   return (
@@ -310,6 +313,13 @@ const StockOutEntry = ({ currentBranch }) => {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr style={{ fontWeight: 600 }}>
+                <td colSpan={4} className="text-right">Total ({filledItems.length} items)</td>
+                <td><div className="text-right" style={{ width: '90px' }}>{formatNumber(totalQty, 2)}</div></td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
           <button className="btn btn-secondary btn-sm" onClick={() => { addLineItem(); focusField('item-0', 100); }} style={{ marginTop: '8px' }}><Plus size={14} /> Add Item</button>
         </div>
@@ -338,6 +348,12 @@ const StockOutEntry = ({ currentBranch }) => {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr style={{ fontWeight: 600 }}>
+                  <td colSpan={3} className="text-right">Total ({savedEntry.items.length} items)</td>
+                  <td className="numeric">{formatNumber(savedEntry.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0), 2)}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>

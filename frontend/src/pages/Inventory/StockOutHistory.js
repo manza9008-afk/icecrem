@@ -161,6 +161,15 @@ const StockOutHistory = ({ currentBranch }) => {
               );
             })}
           </tbody>
+          {outwards.length > 0 && (
+            <tfoot>
+              <tr style={{ fontWeight: 600 }}>
+                <td colSpan={5} className="text-right">Total ({outwards.length} entries)</td>
+                <td className="numeric">{formatNumber(totalQty, 2)}</td>
+                <td colSpan={2}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
         {outwards.length === 0 && <div className="empty-state"><p>No inventory out history found</p></div>}
       </div>

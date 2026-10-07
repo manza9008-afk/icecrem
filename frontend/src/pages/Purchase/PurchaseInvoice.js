@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Save, Plus, Trash2 } from 'lucide-react';
-import api, { getTodayDate, getItemSizeLabel } from '../../services/api';
+import api, { formatNumber, getTodayDate, getItemSizeLabel } from '../../services/api';
 
 const ItemSearchInput = ({ items, value, onChange, onEnter, inputId }) => {
   const [search, setSearch] = useState('');
@@ -241,6 +241,9 @@ const PurchaseInvoice = ({ currentBranch }) => {
     focusField('item-0', 100);
   };
 
+  const filledItems = lineItems.filter(i => i.item_id);
+  const totalQty = filledItems.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
+
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
   return (
@@ -327,6 +330,13 @@ const PurchaseInvoice = ({ currentBranch }) => {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr style={{ fontWeight: 600 }}>
+                <td colSpan={3} className="text-right">Total ({filledItems.length} items)</td>
+                <td><div className="text-right" style={{ width: '90px' }}>{formatNumber(totalQty, 2)}</div></td>
+                <td></td>
+              </tr>
+            </tfoot>
           </table>
           <button className="btn btn-secondary btn-sm" onClick={() => { addLineItem(); focusField('item-0', 100); }} style={{ marginTop: '8px' }}>
             <Plus size={14} /> Add Item
