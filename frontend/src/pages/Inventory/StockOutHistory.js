@@ -62,6 +62,8 @@ const StockOutHistory = ({ currentBranch }) => {
     [outwards]
   );
 
+  const itemsById = useMemo(() => new Map(items.map(i => [i.id, i])), [items]);
+
   if (loading) return <div className="loading-container"><div className="spinner"></div></div>;
 
   return (
@@ -141,7 +143,7 @@ const StockOutHistory = ({ currentBranch }) => {
           </thead>
           <tbody>
             {outwards.map(outward => {
-              const item = items.find(i => i.id === outward.item_id);
+              const item = itemsById.get(outward.item_id);
               return (
                 <tr key={outward.id}>
                   <td>{formatDate(outward.transaction_date)}</td>

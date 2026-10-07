@@ -340,14 +340,22 @@ async def get_manual_stock_outwards(
     res = await session.execute(query)
     outwards = [to_dict(o) for o in res.scalars().all()]
 
+    # Load related branches/godowns/items in one query each (instead of 3 queries per row)
+    async def load_by_ids(model, key):
+        ids = {o.get(key) for o in outwards if o.get(key)}
+        if not ids:
+            return {}
+        rel_res = await session.execute(select(model).where(model.id.in_(ids)))
+        return {r.id: r for r in rel_res.scalars().all()}
+
+    branches = await load_by_ids(DBBranch, "branch_id")
+    godowns = await load_by_ids(DBGodown, "godown_id")
+    items = await load_by_ids(DBItem, "item_id")
+
     for outward in outwards:
-        br_res = await session.execute(select(DBBranch).where(DBBranch.id == outward.get("branch_id")))
-        gd_res = await session.execute(select(DBGodown).where(DBGodown.id == outward.get("godown_id")))
-        it_res = await session.execute(select(DBItem).where(DBItem.id == outward.get("item_id")))
-        
-        branch = br_res.scalar_one_or_none()
-        godown = gd_res.scalar_one_or_none()
-        item = it_res.scalar_one_or_none()
+        branch = branches.get(outward.get("branch_id"))
+        godown = godowns.get(outward.get("godown_id"))
+        item = items.get(outward.get("item_id"))
 
         outward["branch_name"] = branch.name if branch else ""
         outward["godown_name"] = godown.name if godown else ""

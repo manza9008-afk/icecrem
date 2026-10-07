@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import api, { formatCurrency, formatDate } from '../../services/api';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import api, { formatCurrency, formatDate, formatNumber, getItemSizeLabel } from '../../services/api';
 
 const PurchaseHistory = ({ currentBranch }) => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [items, setItems] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => { fetchInvoices(); }, [currentBranch, startDate, endDate]);
+
+  useEffect(() => {
+    api.get('/inventory/items')
+      .then(res => setItems(res.data))
+      .catch(error => { console.error('Error:', error); setItems([]); });
+  }, []);
 
   const fetchInvoices = async () => {
     try {
@@ -39,6 +48,7 @@ const PurchaseHistory = ({ currentBranch }) => {
         <table className="data-grid">
           <thead>
             <tr>
+              <th style={{ width: '32px' }}></th>
               <th>Date</th>
               <th>Invoice No.</th>
               <th>Ref. No.</th>
@@ -49,8 +59,12 @@ const PurchaseHistory = ({ currentBranch }) => {
             </tr>
           </thead>
           <tbody>
-            {invoices.map(inv => (
-              <tr key={inv.id}>
+            {invoices.map(inv => {
+              const isOpen = expandedId === inv.id;
+              return (
+              <React.Fragment key={inv.id}>
+              <tr onClick={() => setExpandedId(isOpen ? null : inv.id)} style={{ cursor: 'pointer' }} title="Click to see products">
+                <td>{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</td>
                 <td>{formatDate(inv.invoice_date)}</td>
                 <td><strong>{inv.invoice_number}</strong></td>
                 <td>{inv.supplier_invoice_number}</td>
@@ -59,7 +73,40 @@ const PurchaseHistory = ({ currentBranch }) => {
                 <td className="numeric">{formatCurrency(inv.grand_total)}</td>
                 <td><span className="badge badge-success">{inv.status}</span></td>
               </tr>
-            ))}
+              {isOpen && (
+                <tr>
+                  <td></td>
+                  <td colSpan={7} style={{ padding: '8px 16px' }}>
+                    <table className="data-grid">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Product Name</th>
+                          <th>Size</th>
+                          <th className="text-right">Qty In</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(inv.items || []).map((item, idx) => {
+                          const master = items.find(i => i.id === item.item_id);
+                          return (
+                            <tr key={item.id || idx}>
+                              <td>{idx + 1}</td>
+                              <td><strong>{item.item_name || master?.name || '-'}</strong></td>
+                              <td>{master ? getItemSizeLabel(master) || '-' : '-'}</td>
+                              <td className="numeric">{formatNumber(item.quantity || 0, 2)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {(inv.items || []).length === 0 && <div className="empty-state"><p>No products in this entry</p></div>}
+                  </td>
+                </tr>
+              )}
+              </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
         {invoices.length === 0 && <div className="empty-state"><p>No purchase invoices found</p></div>}
