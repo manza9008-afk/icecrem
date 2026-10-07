@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Printer, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, Printer, RefreshCw } from 'lucide-react';
 import api, { formatDate, formatNumber, getItemSizeLabel } from '../../services/api';
 
 const StockOutHistory = ({ currentBranch }) => {
@@ -11,6 +11,7 @@ const StockOutHistory = ({ currentBranch }) => {
   const [endDate, setEndDate] = useState('');
   const [selectedGodown, setSelectedGodown] = useState('');
   const [selectedItem, setSelectedItem] = useState('');
+  const [expandedKey, setExpandedKey] = useState(null);
 
   useEffect(() => {
     setSelectedGodown('');
@@ -61,6 +62,21 @@ const StockOutHistory = ({ currentBranch }) => {
     () => outwards.reduce((sum, outward) => sum + Number(outward.quantity || 0), 0),
     [outwards]
   );
+
+  // Each saved product is its own outward row, so group rows by date + stock for the dropdown view
+  const groups = useMemo(() => {
+    const map = new Map();
+    outwards.forEach(o => {
+      const key = `${o.transaction_date}__${o.godown_id}`;
+      if (!map.has(key)) {
+        map.set(key, { key, transaction_date: o.transaction_date, godown_name: o.godown_name, rows: [], qty: 0 });
+      }
+      const group = map.get(key);
+      group.rows.push(o);
+      group.qty += Number(o.quantity || 0);
+    });
+    return [...map.values()];
+  }, [outwards]);
 
   const itemsById = useMemo(() => new Map(items.map(i => [i.id, i])), [items]);
 
@@ -131,42 +147,74 @@ const StockOutHistory = ({ currentBranch }) => {
         <table className="data-grid">
           <thead>
             <tr>
+              <th style={{ width: '32px' }}></th>
               <th>Date</th>
-              <th>Out No.</th>
-              <th>Item</th>
-              <th>Size</th>
               <th>Stock</th>
+              <th className="text-right">Items</th>
               <th className="text-right">Qty Out</th>
-              <th>Remarks</th>
-              <th>Created By</th>
             </tr>
           </thead>
           <tbody>
-            {outwards.map(outward => {
-              const item = itemsById.get(outward.item_id);
+            {groups.map(group => {
+              const isOpen = expandedKey === group.key;
               return (
-                <tr key={outward.id}>
-                  <td>{formatDate(outward.transaction_date)}</td>
-                  <td><strong>{outward.outward_number}</strong></td>
-                  <td>
-                    <strong>{outward.item_name}</strong>
-                    {outward.item_code && <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{outward.item_code}</div>}
-                  </td>
-                  <td>{outward.size || getItemSizeLabel(item) || '-'}</td>
-                  <td>{outward.godown_name || '-'}</td>
-                  <td className="numeric">{formatNumber(outward.quantity, 2)}</td>
-                  <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{outward.remarks || '-'}</td>
-                  <td>{outward.created_by || '-'}</td>
-                </tr>
+                <React.Fragment key={group.key}>
+                  <tr onClick={() => setExpandedKey(isOpen ? null : group.key)} style={{ cursor: 'pointer' }} title="Click to see products">
+                    <td>{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</td>
+                    <td><strong>{formatDate(group.transaction_date)}</strong></td>
+                    <td>{group.godown_name || '-'}</td>
+                    <td className="numeric">{group.rows.length}</td>
+                    <td className="numeric">{formatNumber(group.qty, 2)}</td>
+                  </tr>
+                  {isOpen && (
+                    <tr>
+                      <td></td>
+                      <td colSpan={4} style={{ padding: '8px 16px' }}>
+                        <table className="data-grid">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Out No.</th>
+                              <th>Product Name</th>
+                              <th>Size</th>
+                              <th className="text-right">Qty Out</th>
+                              <th>Remarks</th>
+                              <th>Created By</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {group.rows.map((outward, idx) => {
+                              const item = itemsById.get(outward.item_id);
+                              return (
+                                <tr key={outward.id}>
+                                  <td>{idx + 1}</td>
+                                  <td>{outward.outward_number}</td>
+                                  <td>
+                                    <strong>{outward.item_name}</strong>
+                                    {outward.item_code && <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{outward.item_code}</div>}
+                                  </td>
+                                  <td>{outward.size || getItemSizeLabel(item) || '-'}</td>
+                                  <td className="numeric">{formatNumber(outward.quantity, 2)}</td>
+                                  <td style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{outward.remarks || '-'}</td>
+                                  <td>{outward.created_by || '-'}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               );
             })}
           </tbody>
           {outwards.length > 0 && (
             <tfoot>
               <tr style={{ fontWeight: 600 }}>
-                <td colSpan={5} className="text-right">Total ({outwards.length} entries)</td>
+                <td colSpan={3} className="text-right">Total</td>
+                <td className="numeric">{outwards.length}</td>
                 <td className="numeric">{formatNumber(totalQty, 2)}</td>
-                <td colSpan={2}></td>
               </tr>
             </tfoot>
           )}
